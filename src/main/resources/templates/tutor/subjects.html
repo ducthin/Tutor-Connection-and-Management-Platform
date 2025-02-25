@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Manage Teaching Subjects</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Manage Teaching Subjects</h2>
+                <a th:href="@{/tutor/subjects/add}" class="btn btn-primary">Add New Subject</a>
+            </div>
+
+            <!-- Alert for feedback -->
+            <div th:if="${success}" class="alert alert-success" role="alert" th:text="${success}"></div>
+            <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+
+            <!-- Subjects Table -->
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Years of Experience</th>
+                            <th>Rate per Hour ($)</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="subject : ${tutorSubjects}">
+                            <td th:text="${subject.subjectName}"></td>
+                            <td th:text="${subject.experienceYears}"></td>
+                            <td th:text="${#numbers.formatDecimal(subject.hourlyRate, 1, 2)}"></td>
+                            <td th:text="${subject.description}"></td>
+                            <td>
+                                <span th:text="${subject.active ? 'Active' : 'Inactive'}"
+                                      th:class="${subject.active ? 'badge bg-success' : 'badge bg-secondary'}">
+                                </span>
+                            </td>
+                            <td>
+                                <form th:action="@{/tutor/subjects/__${subject.id}__/edit}"
+                                      method="get" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary me-1">Edit</button>
+                                </form>
+                                <form th:action="@{/tutor/subjects/__${subject.id}__/delete}"
+                                      method="post" class="d-inline"
+                                      onsubmit="return confirm('Are you sure you want to remove this subject?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(tutorSubjects)}">
+                            <td colspan="6" class="text-center">No subjects added yet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

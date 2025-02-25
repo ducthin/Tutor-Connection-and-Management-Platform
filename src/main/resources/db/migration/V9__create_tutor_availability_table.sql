@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS tutor_availability (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tutor_id INT NOT NULL,
+    day_of_week VARCHAR(20) NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    is_recurring BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (tutor_id) REFERENCES tutors(tutor_id) ON DELETE CASCADE
+);

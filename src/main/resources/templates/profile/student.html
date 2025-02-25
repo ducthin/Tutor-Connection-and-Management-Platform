@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Student Profile</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Debug Info -->
+        <div class="container-fluid mb-3" th:if="${@environment.getProperty('app.debug') == 'true'}">
+            <div class="alert alert-info">
+                <h5>Debug Information:</h5>
+                <p>Has Student: <span th:text="${hasStudent}">false</span></p>
+                <p>Has Sessions: <span th:text="${hasSessions}">false</span></p>
+                <p>Session Count: <span th:text="${sessionCount}">0</span></p>
+            </div>
+        </div>
+
+        <!-- Error Messages -->
+        <div class="container-fluid mb-3" th:if="${error}">
+            <div class="alert alert-danger" role="alert">
+                <span th:text="${error}">Error message</span>
+            </div>
+        </div>
+
+        <div class="container py-4">
+            <div class="row">
+                <div class="col-md-12">
+                    <h2>Student Profile</h2>
+                    
+                    <!-- Basic Information -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 text-center">
+                                    <div class="mb-3">
+                                        <img th:if="${user.profilePictureUrl}"
+                                             th:src="${user.profilePictureUrl}"
+                                             alt="Profile Picture"
+                                             class="img-fluid rounded-circle"
+                                             style="width: 200px; height: 200px; object-fit: cover;">
+                                        <div th:unless="${user.profilePictureUrl}"
+                                             class="rounded-circle bg-light d-flex align-items-center justify-content-center"
+                                             style="width: 200px; height: 200px;">
+                                            <i class="bi bi-person-fill" style="font-size: 100px;"></i>
+                                        </div>
+                                    </div>
+                                    <a href="/profile/edit" class="btn btn-primary">Edit Profile</a>
+                                </div>
+                                <div class="col-md-9">
+                                    <h4 th:text="${user.fullName}">Student Name</h4>
+                                    <div class="mb-3">
+                                        <p class="mb-1"><strong>Email:</strong> <span th:text="${user.email}">email@example.com</span></p>
+                                        <p class="mb-1"><strong>Phone:</strong> <span th:text="${user.phoneNumber ?: 'Not set'}">Not set</span></p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <h5>Learning Preferences</h5>
+                                        <p th:text="${student.learningPreferences ?: 'No learning preferences set yet.'}">
+                                            Learning preferences will appear here.
+                                        </p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <h5>Subjects of Interest</h5>
+                                        <p th:text="${student.subjectsOfInterest ?: 'No subjects of interest set yet.'}">
+                                            Subjects of interest will appear here.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sessions -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Recent Sessions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div th:if="${#lists.isEmpty(student.sessions)}" class="text-center py-4">
+                                <p class="text-muted">No sessions found.</p>
+                                <a th:href="@{/tutors}" class="btn btn-primary">Find a Tutor</a>
+                            </div>
+                            <div th:if="${not #lists.isEmpty(student.sessions)}" class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Tutor</th>
+                                            <th>Subject</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="session : ${student.sessions}">
+                                            <td th:text="${#temporals.format(session.startTime, 'MMM dd, yyyy HH:mm')}">Date</td>
+                                            <td th:text="${session.tutor?.user?.fullName}">Tutor Name</td>
+                                            <td th:text="${session.subject?.name}">Subject</td>
+                                            <td>
+                                                <span th:text="${session.status}"
+                                                      th:class="${'badge ' + 
+                                                      (session.status == 'COMPLETED' ? 'bg-success' : 
+                                                       session.status == 'CANCELLED' ? 'bg-danger' : 
+                                                       session.status == 'PENDING' ? 'bg-warning' : 'bg-primary')}">
+                                                    Status
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

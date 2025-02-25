@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Teaching Sessions</title>
+    <style>
+        .session-card {
+            border-left: 4px solid;
+            margin-bottom: 1rem;
+        }
+        .session-upcoming {
+            border-color: #0d6efd;
+        }
+        .session-completed {
+            border-color: #198754;
+        }
+        .session-cancelled {
+            border-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2>Teaching Sessions</h2>
+                        <div>
+                            <select id="statusFilter" class="form-select">
+                                <option value="">All Sessions</option>
+                                <option value="UPCOMING">Upcoming</option>
+                                <option value="COMPLETED">Completed</option>
+                                <option value="CANCELLED">Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Sessions List -->
+                    <div class="sessions-section">
+                        <div th:if="${#lists.isEmpty(sessions)}" class="text-center p-5">
+                            <p>No sessions found</p>
+                        </div>
+
+                        <div th:each="session : ${sessions}" 
+                             th:class="'card session-card ' + 
+                                     ${session.status == 'UPCOMING' ? 'session-upcoming' : 
+                                     (session.status == 'COMPLETED' ? 'session-completed' : 'session-cancelled')}">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <h5 class="card-title" th:text="${session.subject.name}">Mathematics</h5>
+                                        <p class="card-text">
+                                            <strong>Student:</strong> 
+                                            <span th:text="${session.student.user.fullName}">John Doe</span>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p class="mb-1">
+                                            <i class="bi bi-calendar"></i>
+                                            <span th:text="${#temporals.format(session.startTime, 'dd MMM yyyy')}">
+                                                01 Jan 2025
+                                            </span>
+                                        </p>
+                                        <p class="mb-1">
+                                            <i class="bi bi-clock"></i>
+                                            <span th:text="${#temporals.format(session.startTime, 'HH:mm')} + ' - ' + 
+                                                          ${#temporals.format(session.endTime, 'HH:mm')}">
+                                                09:00 - 10:00
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <span th:class="'badge ' + 
+                                                      ${session.status == 'UPCOMING' ? 'bg-primary' : 
+                                                      (session.status == 'COMPLETED' ? 'bg-success' : 'bg-danger')}"
+                                              th:text="${session.status}">
+                                            UPCOMING
+                                        </span>
+                                        <p class="mt-2" th:text="${#numbers.formatCurrency(session.price)}">$50.00</p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3" th:if="${session.notes}">
+                                    <hr>
+                                    <p class="card-text">
+                                        <strong>Notes:</strong>
+                                        <span th:text="${session.notes}">Session notes here...</span>
+                                    </p>
+                                </div>
+
+                                <div class="mt-3" th:if="${session.status == 'UPCOMING'}">
+                                    <hr>
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button class="btn btn-outline-danger btn-sm"
+                                                th:onclick="'cancelSession(' + ${session.id} + ')'">
+                                            Cancel Session
+                                        </button>
+                                        <button class="btn btn-primary btn-sm"
+                                                th:onclick="'startSession(' + ${session.id} + ')'">
+                                            Start Session
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cancel Session Modal -->
+                    <div class="modal fade" id="cancelSessionModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Cancel Session</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Are you sure you want to cancel this session?</p>
+                                    <div class="mb-3">
+                                        <label for="cancelReason" class="form-label">Reason for cancellation</label>
+                                        <textarea class="form-control" id="cancelReason" rows="3" required></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-danger" id="confirmCancel">Cancel Session</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        let currentSessionId;
+
+        // Status filter functionality
+        document.getElementById('statusFilter').addEventListener('change', function() {
+            const status = this.value;
+            const sessions = document.querySelectorAll('.session-card');
+            
+            sessions.forEach(session => {
+                if (!status || session.querySelector('.badge').textContent.trim() === status) {
+                    session.style.display = 'block';
+                } else {
+                    session.style.display = 'none';
+                }
+            });
+        });
+
+        function cancelSession(sessionId) {
+            currentSessionId = sessionId;
+            new bootstrap.Modal(document.getElementById('cancelSessionModal')).show();
+        }
+
+        document.getElementById('confirmCancel').addEventListener('click', function() {
+            const reason = document.getElementById('cancelReason').value;
+            if (!reason) {
+                alert('Please provide a reason for cancellation');
+                return;
+            }
+
+            fetch(`/api/tutor/sessions/${currentSessionId}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
+                },
+                body: JSON.stringify({ reason: reason })
+            }).then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Failed to cancel session');
+                }
+            });
+        });
+
+        function startSession(sessionId) {
+            window.location.href = `/tutor/sessions/${sessionId}/start`;
+        }
+    </script>
+</body>
+</html>

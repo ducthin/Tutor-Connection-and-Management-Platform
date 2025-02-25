@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Edit Tutor Profile</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2>Edit Profile</h2>
+                        <a href="/tutor/profile" class="btn btn-outline-secondary">Back to Profile</a>
+                    </div>
+                    
+                    <form id="editProfileForm" th:action="@{/tutor/profile/edit}" method="post" class="needs-validation" enctype="multipart/form-data" novalidate>
+                        <!-- Basic Information -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">Basic Information</h5>
+                                
+                               <div class="mb-3">
+                                   <label for="profilePicture" class="form-label">Profile Picture</label>
+                                   <input type="file" class="form-control" id="profilePicture" name="profilePicture"
+                                          accept="image/*">
+                                   <div class="text-muted">Upload a professional profile picture</div>
+                                   <div id="currentPicture" class="mt-2">
+                                       <img th:if="${tutor.user.profilePictureUrl}"
+                                            th:src="${tutor.user.profilePictureUrl}"
+                                            alt="Current profile picture"
+                                            class="img-thumbnail"
+                                            style="max-width: 150px;">
+                                   </div>
+                               </div>
+
+                               <div class="mb-3">
+                                   <label for="fullName" class="form-label">Full Name</label>
+                                   <input type="text" class="form-control" id="fullName" name="fullName"
+                                          th:value="${tutor.user.fullName}" required>
+                                   <div class="invalid-feedback">Please enter your full name</div>
+                               </div>
+
+                                <div class="mb-3">
+                                    <label for="phoneNumber" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber"
+                                           th:value="${tutor.user.phoneNumber}">
+                                    <div class="text-muted">Optional - Add your contact number</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Professional Information -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">Professional Information</h5>
+
+                                <div class="mb-3">
+                                    <label for="bio" class="form-label">Bio</label>
+                                    <textarea class="form-control" id="bio" name="bio" rows="4"
+                                              th:text="${tutor.bio}"></textarea>
+                                    <div class="text-muted">Tell students about yourself and your teaching style</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="qualifications" class="form-label">Qualifications</label>
+                                    <textarea class="form-control" id="qualifications" name="qualifications" rows="3"
+                                              th:text="${tutor.qualifications}" required></textarea>
+                                    <div class="invalid-feedback">Please enter your qualifications</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="subjectsTaught" class="form-label">Subjects Taught Overview</label>
+                                    <textarea class="form-control" id="subjectsTaught" name="subjectsTaught" rows="3"
+                                              th:text="${tutor.subjectsTaught}" required></textarea>
+                                    <div class="invalid-feedback">Please enter the subjects you teach</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="hourlyRate" class="form-label">Base Hourly Rate ($)</label>
+                                    <input type="number" class="form-control" id="hourlyRate" name="hourlyRate"
+                                           th:value="${tutor.hourlyRate}" step="0.01" min="0" required>
+                                    <div class="invalid-feedback">Please enter a valid hourly rate</div>
+                                    <div class="text-muted">You can set different rates for specific subjects later</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-4">
+                            <a href="/tutor/profile" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('editProfileForm');
+            const submitButton = form.querySelector('button[type="submit"]');
+            
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                if (!form.checkValidity()) {
+                    event.stopPropagation();
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                submitButton.disabled = true;
+                submitButton.innerHTML = 'Saving...';
+
+                const formData = new FormData(form);
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
+                    },
+                    body: formData
+                }).then(response => {
+                    if (response.ok) {
+                        window.location.href = '/tutor/profile';
+                    } else {
+                        throw new Error('Profile update failed');
+                    }
+                }).catch(error => {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = 'Save Changes';
+                    alert('Failed to update profile: ' + error.message);
+                });
+            });
+
+            // Real-time validation for hourly rate
+            const hourlyRateInput = document.getElementById('hourlyRate');
+            hourlyRateInput.addEventListener('input', function() {
+                const value = parseFloat(this.value);
+                if (value < 0) {
+                    this.value = 0;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

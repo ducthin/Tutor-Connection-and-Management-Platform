@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Favorite Tutors</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container py-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>My Favorite Tutors</h1>
+                <a th:href="@{/tutors/search}" class="btn btn-outline-primary">
+                    <i class="bi bi-search me-2"></i>Find More Tutors
+                </a>
+            </div>
+
+            <!-- Favorite Tutors List -->
+            <div class="row g-4">
+                <div th:if="${tutors.empty}" class="col-12">
+                    <div class="alert alert-info text-center">
+                        <i class="bi bi-heart h3 mb-3 d-block"></i>
+                        <p class="mb-3">You haven't added any tutors to your favorites yet.</p>
+                        <a th:href="@{/tutors/search}" class="btn btn-primary">
+                            Start Finding Tutors
+                        </a>
+                    </div>
+                </div>
+
+                <div th:each="tutor : ${tutors}" class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <!-- Tutor Profile -->
+                            <div class="d-flex align-items-center mb-3">
+                                <img th:if="${tutor.user.profilePictureUrl}"
+                                     th:src="${tutor.user.profilePictureUrl}"
+                                     class="rounded-circle me-3"
+                                     style="width: 60px; height: 60px; object-fit: cover;"
+                                     alt="Profile Picture">
+                                <img th:unless="${tutor.user.profilePictureUrl}"
+                                     src="/images/default-profile.png"
+                                     class="rounded-circle me-3"
+                                     style="width: 60px; height: 60px; object-fit: cover;"
+                                     alt="Default Profile Picture">
+                                <div>
+                                    <h5 class="card-title mb-0" th:text="${tutor.user.fullName}">Tutor Name</h5>
+                                    <div class="text-warning">
+                                        <i class="bi bi-star-fill"></i>
+                                        <span th:text="${#numbers.formatDecimal(tutor.rating, 1, 1)}">4.5</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tutor Info -->
+                            <div class="mb-3">
+                                <strong>Subjects:</strong>
+                                <p class="mb-2" th:text="${tutor.subjectsTaught}">Subjects</p>
+                                <strong>Rate:</strong>
+                                <p class="text-primary mb-0" th:text="${'$' + tutor.hourlyRate + '/hr'}">$50/hr</p>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a th:href="@{/sessions/book/{id}(id=${tutor.id})}"
+                                   class="btn btn-success">
+                                    Book Session
+                                </a>
+                                <div class="btn-group">
+                                    <a th:href="@{/tutors/profile/{id}(id=${tutor.id})}"
+                                       class="btn btn-outline-primary">View Profile</a>
+                                    <form th:action="@{/tutors/favorites/{id}(id=${tutor.id})}"
+                                          th:method="delete"
+                                          onsubmit="return confirm('Remove this tutor from favorites?');">
+                                        <button type="submit" class="btn btn-outline-danger">
+                                            <i class="bi bi-heart-fill"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

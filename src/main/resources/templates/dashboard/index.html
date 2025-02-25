@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Error Messages -->
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <span th:text="${error}">Error message</span>
+        </div>
+
+        <h1>Welcome to Your Dashboard</h1>
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Account Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Name:</strong> <span th:text="${user.username}">John Doe</span></p>
+                                <p><strong>Email:</strong> <span th:text="${user.username}">john@example.com</span></p>
+                                <p><strong>Role:</strong> <span th:text="${user.authorities}">STUDENT</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Messages</h5>
+                        <p class="card-text">View and manage your messages</p>
+                        <a href="#" class="btn btn-primary">Go to Messages</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Profile</h5>
+                        <p class="card-text">Update your profile information</p>
+                        <a th:href="@{/profile}" class="btn btn-primary">Edit Profile</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Settings</h5>
+                        <p class="card-text">Manage your account settings</p>
+                        <a href="#" class="btn btn-primary">View Settings</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

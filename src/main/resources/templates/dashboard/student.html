@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Student Dashboard</title>
+    <style>
+        .stat-card {
+            border-radius: 10px;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .tutor-card {
+            border-left: 4px solid #007bff;
+            transition: transform 0.2s;
+        }
+        .tutor-card:hover {
+            transform: translateY(-3px);
+        }
+        .session-card {
+            border-left: 4px solid #28a745;
+        }
+        .rating-stars {
+            color: #ffc107;
+        }
+        .upcoming-sessions {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .stat-icon {
+            font-size: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tutor-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container py-4">
+            <!-- Welcome Section -->
+            <div class="d-flex align-items-center mb-4">
+                <div class="me-4">
+                   <img th:if="${student.user.profilePictureUrl}"
+                        th:src="${student.user.profilePictureUrl}"
+                        class="tutor-avatar"
+                        alt="Profile Picture"
+                        style="width: 80px; height: 80px;">
+                   <div th:unless="${student.user.profilePictureUrl}"
+                        class="rounded-circle bg-light d-flex align-items-center justify-content-center"
+                        style="width: 80px; height: 80px;">
+                       <i class="bi bi-person-fill" style="font-size: 40px;"></i>
+                   </div>
+                </div>
+                <div class="flex-grow-1">
+                    <h2>Welcome Back, <span th:text="${student.user.fullName}">Student</span>!</h2>
+                    <p class="text-muted" th:if="${!student.hasCompletedProfile}">
+                        Please complete your profile to unlock all features.
+                    </p>
+                </div>
+                <a th:href="@{/student/profile}" class="btn btn-outline-primary">
+                    <i class="fas fa-user-edit"></i> Edit Profile
+                </a>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card stat-card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="stat-icon bg-white text-primary me-3">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <div>
+                                    <h6 class="card-subtitle mb-1">Active Subjects</h6>
+                                    <h3 class="card-title mb-0" th:text="${activeSubjects}">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="stat-icon bg-white text-success me-3">
+                                    <i class="fas fa-chalkboard"></i>
+                                </div>
+                                <div>
+                                    <h6 class="card-subtitle mb-1">Total Sessions</h6>
+                                    <h3 class="card-title mb-0" th:text="${totalSessions}">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="stat-icon bg-white text-info me-3">
+                                    <i class="fas fa-user-graduate"></i>
+                                </div>
+                                <div>
+                                    <h6 class="card-subtitle mb-1">Favorite Tutors</h6>
+                                    <h3 class="card-title mb-0" th:text="${#lists.size(favoriteTutors)}">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="stat-icon bg-white text-warning me-3">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div>
+                                    <h6 class="card-subtitle mb-1">Upcoming Sessions</h6>
+                                    <h3 class="card-title mb-0" th:text="${#lists.size(upcomingSessions)}">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Upcoming Sessions -->
+                <div class="col-md-8 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Upcoming Sessions</h5>
+                            <a th:href="@{/tutors}" class="btn btn-sm btn-primary">
+                                Book New Session
+                            </a>
+                        </div>
+                        <div class="card-body upcoming-sessions">
+                            <div th:if="${#lists.isEmpty(upcomingSessions)}" class="text-center text-muted py-5">
+                                <i class="fas fa-calendar fa-3x mb-3"></i>
+                                <p>No upcoming sessions</p>
+                                <a th:href="@{/tutors}" class="btn btn-primary">Find a Tutor</a>
+                            </div>
+                            <div th:each="session : ${upcomingSessions}" class="card session-card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="card-title" th:text="${session.subject?.name}">Subject</h6>
+                                            <p class="card-text">
+                                                <i class="fas fa-chalkboard-teacher text-muted me-2"></i>
+                                                <span th:text="${session.tutor?.user?.fullName}">Tutor Name</span>
+                                            </p>
+                                            <p class="card-text">
+                                                <i class="far fa-clock text-muted me-2"></i>
+                                                <span th:text="${#temporals.format(session.startTime, 'MMM dd, HH:mm')}">Time</span>
+                                            </p>
+                                        </div>
+                                        <div class="text-end">
+                                            <span th:class="${'badge ' + (session.status == 'CONFIRMED' ? 'bg-success' : 'bg-warning')}"
+                                                  th:text="${session.status}">Status</span>
+                                            <div class="mt-2">
+                                                <a th:href="@{/student/sessions/{id}(id=${session.id})}" 
+                                                   class="btn btn-sm btn-outline-primary">View Details</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Favorite Tutors -->
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Your Tutors</h5>
+                            <a th:href="@{/tutors}" class="btn btn-sm btn-outline-primary">Find More</a>
+                        </div>
+                        <div class="card-body">
+                            <div th:if="${#lists.isEmpty(favoriteTutors)}" class="text-center text-muted py-5">
+                                <i class="fas fa-user-friends fa-3x mb-3"></i>
+                                <p>No favorite tutors yet</p>
+                                <a th:href="@{/tutors}" class="btn btn-primary">Browse Tutors</a>
+                            </div>
+                            <div th:each="tutor : ${favoriteTutors}" class="card tutor-card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <img th:src="${tutor.user.profilePictureUrl ?: '/images/default-avatar.png'}"
+                                             class="tutor-avatar me-3" alt="Tutor Avatar">
+                                        <div>
+                                            <h6 class="card-title mb-1" th:text="${tutor.user.fullName}">Tutor Name</h6>
+                                            <div class="rating-stars mb-2">
+                                                <th:block th:if="${tutor.rating != null}">
+                                                    <th:block th:each="i : ${#numbers.sequence(1, tutor.rating)}">
+                                                        <i class="fas fa-star"></i>
+                                                    </th:block>
+                                                </th:block>
+                                                <th:block th:unless="${tutor.rating != null}">
+                                                    <span class="text-muted">No ratings yet</span>
+                                                </th:block>
+                                            </div>
+                                            <a th:href="@{/tutors/{id}(id=${tutor.id})}" 
+                                               class="btn btn-sm btn-outline-primary">Book Session</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <a th:href="@{/tutors}" class="btn btn-outline-primary w-100 py-3">
+                                        <i class="fas fa-search fa-2x mb-2"></i>
+                                        <br>Find Tutors
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a th:href="@{/student/sessions}" class="btn btn-outline-success w-100 py-3">
+                                        <i class="fas fa-history fa-2x mb-2"></i>
+                                        <br>Session History
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a th:href="@{/student/subjects}" class="btn btn-outline-info w-100 py-3">
+                                        <i class="fas fa-book fa-2x mb-2"></i>
+                                        <br>My Subjects
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a th:href="@{/student/payments}" class="btn btn-outline-warning w-100 py-3">
+                                        <i class="fas fa-credit-card fa-2x mb-2"></i>
+                                        <br>Payment History
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

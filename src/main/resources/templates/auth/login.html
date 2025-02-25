@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Login</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container mt-5">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="auth-card">
+                        <div class="card-header">
+                            <h3 class="text-center mb-0">Welcome Back</h3>
+                            <p class="text-center text-muted mb-0">Please login to your account</p>
+                        </div>
+                        <div class="card-body">
+                            <!-- Error Messages -->
+                            <div th:if="${param.error}" class="alert alert-danger">
+                                <span th:text="${param.message != null} ? ${param.message} : 'Invalid username or password.'">
+                                    Invalid username or password.
+                                </span>
+                            </div>
+                            <!-- Success Messages -->
+                            <div th:if="${param.logout}" class="alert alert-success">
+                                You have been logged out successfully.
+                            </div>
+                            <div th:if="${param.success}" class="alert alert-success" th:text="${param.success}">
+                            </div>
+                            <!-- Resend Verification -->
+                            <div th:if="${param.error != null and param.message != null and param.message.toString().contains('verify')}" 
+                                 class="alert alert-info">
+                                <a th:href="@{/resend-verification(email=${param.username})}" class="alert-link">
+                                    Click here to resend verification email
+                                </a>
+                            </div>
+                            <!-- Login Form -->
+                            <form th:action="@{/login}" method="post">
+                                <div class="form-group mb-3">
+                                    <label class="form-label" for="username">Email</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                        <input type="email" class="form-control" id="username" name="username" 
+                                               th:value="${param.username}"
+                                               placeholder="Enter your email" required>
+                                    </div>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label class="form-label" for="password">Password</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                        <input type="password" class="form-control" id="password" name="password" 
+                                               placeholder="Enter your password" required>
+                                    </div>
+                                </div>
+                                <div class="form-group mb-4">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="remember-me" name="remember-me">
+                                            <label class="form-check-label" for="remember-me">
+                                                Remember me
+                                            </label>
+                                        </div>
+                                        <a th:href="@{/forgot-password}" class="text-primary">Forgot password?</a>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 mb-3">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                                </button>
+                            </form>
+                            <div class="text-center">
+                                <p class="mb-0">Don't have an account? 
+                                    <a th:href="@{/register}" class="text-primary">Register here</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

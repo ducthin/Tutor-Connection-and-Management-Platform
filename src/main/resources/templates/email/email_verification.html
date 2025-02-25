@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .content {
+            background-color: #f8f9fa;
+            padding: 30px;
+            border-radius: 5px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">
+        <h1>TCMP</h1>
+    </div>
+    <div class="content">
+        <h2>Verify Your Email Address</h2>
+        <p>Thank you for registering with TCMP. To complete your registration and activate your account, please click the button below:</p>
+        
+        <div style="text-align: center;">
+            <a th:href="${verificationLink}" class="button">Verify Email Address</a>
+        </div>
+        
+        <p>If the button above doesn't work, you can copy and paste the following link into your browser:</p>
+        <p style="word-break: break-all;" th:text="${verificationLink}">verification link</p>
+        
+        <p>This link will expire in 24 hours.</p>
+        
+        <p>If you did not create an account with TCMP, you can safely ignore this email.</p>
+    </div>
+    <div class="footer">
+        <p>This is an automated message, please do not reply to this email.</p>
+        <p>&copy; 2024 TCMP. All rights reserved.</p>
+    </div>
+</body>
+</html>

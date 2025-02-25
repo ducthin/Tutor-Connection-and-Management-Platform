@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Available Tutors</title>
+    <style>
+        .time-slot {
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .time-slot:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+        .time-slot.active {
+            background-color: rgba(0, 123, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container py-4">
+            <!-- Availability Search Form -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Find Available Tutors</h5>
+                    <form th:action="@{/tutors/available}" method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Day of Week</label>
+                            <select class="form-select" name="dayOfWeek" required>
+                                <option th:each="day : ${T(com.upsilon.TCMP.enums.DayOfWeek).values()}"
+                                        th:value="${day}"
+                                        th:text="${day.toString().toLowerCase().capitalize()}"
+                                        th:selected="${day == param.dayOfWeek}">
+                                    Monday
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Time</label>
+                            <input type="time" class="form-control" name="time" required
+                                   th:value="${param.time}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Subject (Optional)</label>
+                            <select class="form-select" name="subjectId">
+                                <option value="">All Subjects</option>
+                                <option th:each="subject : ${subjects}"
+                                        th:value="${subject.id}"
+                                        th:text="${subject.name}"
+                                        th:selected="${subject.id == param.subjectId}">
+                                    Mathematics
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary w-100">Search</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Available Tutors List -->
+            <div class="row g-4">
+                <div th:if="${tutors.empty}" class="col-12 text-center">
+                    <div class="alert alert-info">
+                        No tutors available at the selected time.
+                        <a href="javascript:history.back()" class="alert-link">Try a different time</a>
+                    </div>
+                </div>
+
+                <div th:each="tutor : ${tutors}" class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <!-- Tutor Profile Section -->
+                            <div class="d-flex align-items-center mb-3">
+                                <img th:if="${tutor.user.profilePictureUrl}"
+                                     th:src="${tutor.user.profilePictureUrl}"
+                                     class="rounded-circle me-3"
+                                     style="width: 60px; height: 60px; object-fit: cover;"
+                                     alt="Profile Picture">
+                                <img th:unless="${tutor.user.profilePictureUrl}"
+                                     src="/images/default-profile.png"
+                                     class="rounded-circle me-3"
+                                     style="width: 60px; height: 60px; object-fit: cover;"
+                                     alt="Default Profile Picture">
+                                <div>
+                                    <h5 class="card-title mb-0" th:text="${tutor.user.fullName}">Tutor Name</h5>
+                                    <div class="text-warning">
+                                        <i class="bi bi-star-fill"></i>
+                                        <span th:text="${#numbers.formatDecimal(tutor.rating, 1, 1)}">4.5</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tutor Info -->
+                            <div class="mb-3">
+                                <strong>Subjects:</strong>
+                                <p class="mb-2" th:text="${tutor.subjectsTaught}">Subjects</p>
+                                <strong>Rate:</strong>
+                                <p class="text-primary mb-0" th:text="${'$' + tutor.hourlyRate + '/hr'}">$50/hr</p>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a th:href="@{/sessions/book(tutorId=${tutor.id}, dayOfWeek=${param.dayOfWeek}, time=${param.time})}"
+                                   class="btn btn-success">
+                                    Book Session
+                                </a>
+                                <div class="btn-group">
+                                    <a th:href="@{/tutors/profile/{id}(id=${tutor.id})}"
+                                       class="btn btn-outline-primary">View Profile</a>
+                                    <form th:action="@{/tutors/favorites/{id}(id=${tutor.id})}"
+                                          method="post" style="display: inline;">
+                                        <button type="submit" class="btn btn-outline-success">
+                                            <i class="bi bi-heart"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Time Slot Selection -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const timeSlots = document.querySelectorAll('.time-slot');
+            timeSlots.forEach(slot => {
+                slot.addEventListener('click', function() {
+                    timeSlots.forEach(s => s.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById('selectedTime').value = this.dataset.time;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

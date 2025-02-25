@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Find a Tutor</title>
+    <style>
+        .search-hero {
+            background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+            padding: 100px 0;
+            color: white;
+            margin-top: -1.5rem;
+            margin-bottom: 3rem;
+        }
+        .featured-tutor-card {
+            transition: transform 0.3s;
+        }
+        .featured-tutor-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Hero Section with Search -->
+        <div class="search-hero">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-8 mx-auto text-center">
+                        <h1 class="display-4 mb-4">Find Your Perfect Tutor</h1>
+                        <p class="lead mb-4">Choose from our verified tutors and boost your learning journey today.</p>
+                        
+                        <!-- Quick Search Form -->
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <form th:action="@{/tutors/search}" method="get" class="row g-3">
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control form-control-lg" 
+                                               name="keyword" placeholder="Search by name or subject">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select class="form-select form-select-lg" name="subjectId">
+                                            <option value="">All Subjects</option>
+                                            <option th:each="subject : ${subjects}"
+                                                    th:value="${subject.id}"
+                                                    th:text="${subject.name}">Subject</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button type="submit" class="btn btn-primary btn-lg w-100">Search</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- Featured Tutors Section -->
+            <div class="mb-5">
+                <h2 class="mb-4">Top-Rated Tutors</h2>
+                <div class="row g-4">
+                    <div th:each="tutor : ${featuredTutors}" class="col-md-4">
+                        <div class="card h-100 shadow-sm featured-tutor-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <img th:if="${tutor.user.profilePictureUrl}"
+                                         th:src="${tutor.user.profilePictureUrl}"
+                                         class="rounded-circle me-3"
+                                         style="width: 60px; height: 60px; object-fit: cover;"
+                                         alt="Profile Picture">
+                                    <div>
+                                        <h5 class="card-title mb-0" th:text="${tutor.user.fullName}">Tutor Name</h5>
+                                        <div class="text-warning">
+                                            <i class="bi bi-star-fill"></i>
+                                            <span th:text="${#numbers.formatDecimal(tutor.rating, 1, 1)}">4.5</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p class="card-text" th:text="${tutor.bio}">Bio</p>
+
+                                <div class="mb-3">
+                                    <strong>Subjects:</strong>
+                                    <p class="mb-0" th:text="${tutor.subjectsTaught}">Subjects</p>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong class="text-primary" th:text="${'$' + tutor.hourlyRate + '/hr'}">$50/hr</strong>
+                                    </div>
+                                    <a th:href="@{/tutors/profile/{id}(id=${tutor.id})}" 
+                                       class="btn btn-outline-primary">View Profile</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Options -->
+            <div class="row g-4 mb-5">
+                <div class="col-md-4">
+                    <div class="card h-100 text-center">
+                        <div class="card-body">
+                            <i class="bi bi-search display-4 text-primary mb-3"></i>
+                            <h3>Find by Subject</h3>
+                            <p>Search tutors based on your subject needs.</p>
+                            <a th:href="@{/tutors/search}" class="btn btn-outline-primary">Browse Subjects</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 text-center">
+                        <div class="card-body">
+                            <i class="bi bi-clock display-4 text-primary mb-3"></i>
+                            <h3>Schedule Flexibility</h3>
+                            <p>Find tutors available at your preferred time.</p>
+                            <a th:href="@{/tutors/available}" class="btn btn-outline-primary">Check Availability</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 text-center">
+                        <div class="card-body">
+                            <i class="bi bi-star display-4 text-primary mb-3"></i>
+                            <h3>Top Rated</h3>
+                            <p>Browse our highest-rated tutors.</p>
+                            <a th:href="@{/tutors/search?sortBy=RATING}" class="btn btn-outline-primary">View Top Tutors</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- How It Works Section -->
+            <div class="mb-5">
+                <h2 class="text-center mb-4">How It Works</h2>
+                <div class="row g-4">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="display-4 text-primary mb-3">1</div>
+                            <h4>Search</h4>
+                            <p>Find tutors based on subject, availability, or ratings</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="display-4 text-primary mb-3">2</div>
+                            <h4>Compare</h4>
+                            <p>Review profiles, ratings, and pricing</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="display-4 text-primary mb-3">3</div>
+                            <h4>Book</h4>
+                            <p>Schedule a session with your chosen tutor</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="display-4 text-primary mb-3">4</div>
+                            <h4>Learn</h4>
+                            <p>Start learning and achieve your goals</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

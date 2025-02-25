@@ -1,0 +1,7 @@
+UPDATE users 
+SET role = CASE 
+    WHEN role = 'ADMIN' THEN 'ROLE_ADMIN'
+    WHEN role = 'TUTOR' THEN 'ROLE_TUTOR'
+    WHEN role = 'STUDENT' THEN 'ROLE_STUDENT'
+    ELSE role
+END;

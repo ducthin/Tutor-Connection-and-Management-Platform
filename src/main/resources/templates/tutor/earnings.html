@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Earnings</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h2 class="mb-4">Earnings Overview</h2>
+
+                    <!-- Earnings Summary Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title text-muted">Total Earnings</h6>
+                                    <h3 class="card-text" th:text="${#numbers.formatCurrency(totalEarnings)}">$0.00</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title text-muted">Monthly Earnings</h6>
+                                    <h3 class="card-text" th:text="${#numbers.formatCurrency(monthlyEarnings)}">$0.00</h3>
+                                    <small class="text-muted" 
+                                           th:text="${#temporals.format(#temporals.createNow(), 'MMMM yyyy')}">
+                                        January 2025
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Filter -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <form th:action="@{/tutor/earnings}" method="get" class="row align-items-end">
+                                <div class="col-md-4">
+                                    <label for="year" class="form-label">Year</label>
+                                    <select class="form-select" id="year" name="year">
+                                        <option th:each="y : ${#numbers.sequence(2024, #temporals.year(#temporals.createNow()))}"
+                                                th:value="${y}" 
+                                                th:text="${y}"
+                                                th:selected="${y == year}">
+                                            2024
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="month" class="form-label">Month</label>
+                                    <select class="form-select" id="month" name="month">
+                                        <option value="1" th:selected="${month == 1}">January</option>
+                                        <option value="2" th:selected="${month == 2}">February</option>
+                                        <option value="3" th:selected="${month == 3}">March</option>
+                                        <option value="4" th:selected="${month == 4}">April</option>
+                                        <option value="5" th:selected="${month == 5}">May</option>
+                                        <option value="6" th:selected="${month == 6}">June</option>
+                                        <option value="7" th:selected="${month == 7}">July</option>
+                                        <option value="8" th:selected="${month == 8}">August</option>
+                                        <option value="9" th:selected="${month == 9}">September</option>
+                                        <option value="10" th:selected="${month == 10}">October</option>
+                                        <option value="11" th:selected="${month == 11}">November</option>
+                                        <option value="12" th:selected="${month == 12}">December</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="submit" class="btn btn-primary w-100">View Earnings</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Earnings Chart -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Monthly Earnings Trend</h5>
+                            <canvas id="earningsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recent Payments -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Recent Payments</h5>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Student</th>
+                                            <th>Subject</th>
+                                            <th>Duration</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="payment : ${recentPayments}">
+                                            <td th:text="${#temporals.format(payment.paymentDate, 'dd MMM yyyy')}">01 Jan 2025</td>
+                                            <td th:text="${payment.studentName}">John Doe</td>
+                                            <td th:text="${payment.subjectName}">Mathematics</td>
+                                            <td th:text="${payment.duration + ' hr'}">1 hr</td>
+                                            <td th:text="${#numbers.formatCurrency(payment.amount)}">$50.00</td>
+                                            <td>
+                                                <span class="badge bg-success" th:text="${payment.status}">Completed</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js for earnings visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script th:inline="javascript">
+        const monthlyData = /*[[${monthlyData}]]*/ [];
+        const labels = monthlyData.map(item => item.month);
+        const values = monthlyData.map(item => item.earnings);
+
+        const ctx = document.getElementById('earningsChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Monthly Earnings ($)',
+                    data: values,
+                    borderColor: '#0d6efd',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

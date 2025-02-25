@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Search Results</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container py-4">
+            <!-- Search Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form th:action="@{/tutors/results}" method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" name="keyword" th:value="${keyword}"
+                                   placeholder="Search by name or subject">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" name="subjectId">
+                                <option value="">All Subjects</option>
+                                <option th:each="subject : ${subjects}"
+                                        th:value="${subject.id}"
+                                        th:text="${subject.name}"
+                                        th:selected="${subject.id == subjectId}">Subject</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="sortBy">
+                                <option value="RATING">Rating (High to Low)</option>
+                                <option value="PRICE_LOW">Price (Low to High)</option>
+                                <option value="PRICE_HIGH">Price (High to Low)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" class="form-control" name="maxRate" step="0.01"
+                                   placeholder="Max Rate ($)">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">Search</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Search Results -->
+            <div class="row g-4">
+                <div th:if="${tutors.empty}" class="col-12 text-center">
+                    <div class="alert alert-info">
+                        No tutors found matching your criteria.
+                        <a th:href="@{/tutors/search}" class="alert-link">Try different search options</a>
+                    </div>
+                </div>
+                
+                <div th:each="tutor : ${tutors}" class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <img th:if="${tutor.user.profilePictureUrl}"
+                                     th:src="${tutor.user.profilePictureUrl}"
+                                     class="rounded-circle me-3"
+                                     style="width: 60px; height: 60px; object-fit: cover;"
+                                     alt="Profile Picture">
+                                <img th:unless="${tutor.user.profilePictureUrl}"
+                                     src="/images/default-profile.png"
+                                     class="rounded-circle me-3"
+                                     style="width: 60px; height: 60px; object-fit: cover;"
+                                     alt="Default Profile Picture">
+                                <div>
+                                    <h5 class="card-title mb-0" th:text="${tutor.user.fullName}">Tutor Name</h5>
+                                    <div class="text-warning">
+                                        <i class="bi bi-star-fill"></i>
+                                        <span th:text="${#numbers.formatDecimal(tutor.rating, 1, 1)}">4.5</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="card-text" th:text="${tutor.bio}">Bio</p>
+
+                            <div class="mb-3">
+                                <strong>Subjects:</strong>
+                                <p class="mb-0" th:text="${tutor.subjectsTaught}">Subjects</p>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong class="text-primary" th:text="${'$' + tutor.hourlyRate + '/hr'}">$50/hr</strong>
+                                </div>
+                                <div class="btn-group">
+                                    <a th:href="@{/tutors/profile/{id}(id=${tutor.id})}"
+                                       class="btn btn-outline-primary">View Profile</a>
+                                    <form th:action="@{/tutors/favorites/{id}(id=${tutor.id})}"
+                                          method="post" style="display: inline;">
+                                        <button type="submit" class="btn btn-outline-success">
+                                            <i class="bi bi-heart"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Error</title>
+    <style>
+        .error-container {
+            text-align: center;
+            padding: 40px 0;
+        }
+        .error-icon {
+            font-size: 64px;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+        .error-message {
+            font-size: 24px;
+            color: #343a40;
+            margin-bottom: 20px;
+        }
+        .error-details {
+            color: #6c757d;
+            margin-bottom: 30px;
+        }
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #0d6efd;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .back-button:hover {
+            background-color: #0b5ed7;
+            color: white;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <div class="error-container">
+                <div class="error-icon">
+                    <i class="bi bi-exclamation-circle"></i>
+                </div>
+                <h1 class="error-message" th:text="${error}">An error occurred</h1>
+                <p class="error-details">
+                    We apologize for the inconvenience. Please try the following:
+                </p>
+                <ul class="list-unstyled">
+                    <li>Check if you're logged in</li>
+                    <li>Verify that you have the necessary permissions</li>
+                    <li>Try refreshing the page</li>
+                </ul>
+                <div class="mt-4">
+                    <a th:href="${redirectUrl}" class="back-button">
+                        <i class="bi bi-arrow-left"></i> Go Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

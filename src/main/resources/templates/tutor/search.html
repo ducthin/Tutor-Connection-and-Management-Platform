@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Search Tutors</title>
+    <style>
+        .search-option {
+            transition: transform 0.3s;
+        }
+        .search-option:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container py-4">
+            <h1 class="text-center mb-5">Find Your Perfect Tutor</h1>
+
+            <div class="row g-4">
+                <!-- Regular Search -->
+                <div class="col-md-6">
+                    <div class="card h-100 shadow search-option">
+                        <div class="card-body text-center p-5">
+                            <i class="bi bi-search display-1 text-primary mb-4"></i>
+                            <h3>Search by Criteria</h3>
+                            <p class="mb-4">Find tutors based on subject, rating, and price range.</p>
+                            
+                            <form th:action="@{/tutors/results}" method="get" class="mb-4">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" name="keyword"
+                                           placeholder="Search by name or subject">
+                                </div>
+                                <div class="mb-3">
+                                    <select class="form-select" name="subjectId">
+                                        <option value="">All Subjects</option>
+                                        <option th:each="subject : ${subjects}"
+                                                th:value="${subject.id}"
+                                                th:text="${subject.name}">Subject</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <select class="form-select" name="sortBy">
+                                        <option value="RATING">Sort by Rating</option>
+                                        <option value="PRICE_LOW">Sort by Price (Low to High)</option>
+                                        <option value="PRICE_HIGH">Sort by Price (High to Low)</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Search Tutors</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Availability Search -->
+                <div class="col-md-6">
+                    <div class="card h-100 shadow search-option">
+                        <div class="card-body text-center p-5">
+                            <i class="bi bi-calendar-check display-1 text-primary mb-4"></i>
+                            <h3>Search by Availability</h3>
+                            <p class="mb-4">Find tutors available at your preferred time.</p>
+                            
+                            <form th:action="@{/tutors/available}" method="get" class="mb-4">
+                                <div class="mb-3">
+                                    <select class="form-select" name="dayOfWeek" required>
+                                        <option value="">Select Day</option>
+                                        <option th:each="day : ${T(com.upsilon.TCMP.enums.DayOfWeek).values()}"
+                                                th:value="${day}"
+                                                th:text="${#strings.capitalize(#strings.toLowerCase(day.toString()))}">
+                                            Monday
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="time" class="form-control" name="time" required>
+                                </div>
+                                <div class="mb-3">
+                                    <select class="form-select" name="subjectId">
+                                        <option value="">All Subjects</option>
+                                        <option th:each="subject : ${subjects}"
+                                                th:value="${subject.id}"
+                                                th:text="${subject.name}">Subject</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Find Available Tutors</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Featured Subjects -->
+            <div class="mt-5">
+                <h3 class="text-center mb-4">Popular Subjects</h3>
+                <div class="row row-cols-2 row-cols-md-4 g-4">
+                    <div class="col" th:each="subject : ${subjects}">
+                        <a th:href="@{/tutors/results(subjectId=${subject.id})}" 
+                           class="text-decoration-none">
+                            <div class="card h-100 text-center">
+                                <div class="card-body">
+                                    <i class="bi bi-book display-6 text-primary mb-3"></i>
+                                    <h5 class="card-title" th:text="${subject.name}">Subject</h5>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

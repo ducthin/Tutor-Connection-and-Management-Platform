@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Tutor Profile</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h2>Tutor Profile</h2>
+                    
+                    <!-- Basic Information -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Basic Information</h5>
+                            <div class="row">
+                                <div class="col-md-3 text-center mb-3">
+                                    <div class="profile-picture-container">
+                                        <img th:if="${tutor.user.profilePictureUrl}"
+                                             th:src="${tutor.user.profilePictureUrl}"
+                                             class="img-fluid rounded-circle"
+                                             alt="Profile Picture"
+                                             style="width: 200px; height: 200px; object-fit: cover;">
+                                        <div th:unless="${tutor.user.profilePictureUrl}"
+                                             class="rounded-circle bg-light d-flex align-items-center justify-content-center"
+                                             style="width: 200px; height: 200px;">
+                                            <i class="bi bi-person-fill" style="font-size: 100px;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
+                                    <p><strong>Name:</strong> <span th:text="${tutor.user.fullName}">John Doe</span></p>
+                                    <p><strong>Email:</strong> <span th:text="${tutor.user.email}">john@example.com</span></p>
+                                    <p><strong>Phone:</strong> <span th:text="${tutor.user.phoneNumber}">Not set</span></p>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <a th:href="@{/tutor/profile/edit}" class="btn btn-primary">Edit Profile</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Professional Information -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Professional Information</h5>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h6>Bio</h6>
+                                    <p th:text="${tutor.bio}">No bio available</p>
+                                    
+                                    <h6>Qualifications</h6>
+                                    <p th:text="${tutor.qualifications}">No qualifications information available</p>
+                                    
+                                    <h6>Subjects Taught</h6>
+                                    <p th:text="${tutor.subjectsTaught}">No subjects information available</p>
+
+                                    <h6>Rating</h6>
+                                    <p>
+                                        <span th:text="${#numbers.formatDecimal(tutor.rating, 1, 1)}">0.0</span>
+                                        <span class="text-warning">
+                                            <i class="bi bi-star-fill"></i>
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Teaching Subjects -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Teaching Subjects</h5>
+                            <!-- Debug info -->
+                            <div th:if="${tutorSubjects == null}" class="alert alert-warning">
+                                Tutor subjects is null
+                            </div>
+                            <div th:if="${tutorSubjects != null}" class="alert alert-info">
+                                Number of subjects: <span th:text="${#lists.size(tutorSubjects)}">0</span>
+                                <br/>
+                                <!-- Print each subject's details -->
+                                <div th:each="subject : ${tutorSubjects}" style="font-family: monospace;">
+                                    <div>
+                                        Properties:
+                                        <ul>
+                                            <li>ID: <span th:text="${#objects.nullSafe(subject.id, 'null')}"></span></li>
+                                            <li>Name: <span th:text="${#objects.nullSafe(subject.subjectName, 'null')}"></span></li>
+                                            <li>Rate: <span th:text="${#objects.nullSafe(subject.hourlyRate, 'null')}"></span></li>
+                                            <li>Active: <span th:text="${#objects.nullSafe(subject.active, 'null')}"></span></li>
+                                            <li>Experience: <span th:text="${#objects.nullSafe(subject.experienceYears, 'null')}"></span></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="subjects-section">
+                                <a th:href="@{/tutor/subjects}" class="btn btn-primary mb-3">Manage Subjects</a>
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Subject</th>
+                                                <th>Years of Experience</th>
+                                                <th>Rate per Hour</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:if="${tutorSubjects == null || #lists.isEmpty(tutorSubjects)}">
+                                                <td colspan="4" class="text-center">No subjects added yet</td>
+                                            </tr>
+                                            <tr th:each="subject : ${tutorSubjects}">
+                                                <td th:text="${subject.subjectName}">Mathematics</td>
+                                                <td th:text="${subject.experienceYears}">5</td>
+                                                <td th:text="${#numbers.formatDecimal(subject.hourlyRate, 1, 2)}">$50.00</td>
+                                                <td>
+                                                    <span th:text="${subject.active ? 'Active' : 'Inactive'}"
+                                                          th:class="${subject.active ? 'badge bg-success' : 'badge bg-secondary'}">
+                                                        Active
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Availability -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Availability</h5>
+                            <a th:href="@{/tutor/availability}" class="btn btn-primary mb-3">Manage Availability</a>
+                            <div id="availability-section">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Day</th>
+                                                <th>Start Time</th>
+                                                <th>End Time</th>
+                                                <th>Recurring</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:each="slot : ${availability}">
+                                                <td th:text="${slot.dayOfWeek}">Monday</td>
+                                                <td th:text="${#temporals.format(slot.startTime, 'HH:mm')}">09:00</td>
+                                                <td th:text="${#temporals.format(slot.endTime, 'HH:mm')}">17:00</td>
+                                                <td>
+                                                    <span th:text="${slot.isRecurring ? 'Yes' : 'No'}"
+                                                          th:class="${slot.isRecurring ? 'badge bg-info' : 'badge bg-warning'}">
+                                                        Yes
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reviews -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Recent Reviews</h5>
+                            <div id="reviews-section">
+                                <div th:each="review : ${recentReviews}" class="review mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <strong th:text="${review.studentName}">Student Name</strong>
+                                            <div class="text-warning">
+                                                <i class="bi bi-star-fill" th:each="i : ${#numbers.sequence(1, review.rating)}"></i>
+                                            </div>
+                                        </div>
+                                        <small class="text-muted" th:text="${#temporals.format(review.createdAt, 'dd MMM yyyy')}">01 Jan 2025</small>
+                                    </div>
+                                    <p class="mt-2" th:text="${review.comment}">Review comment here</p>
+                                </div>
+                                <div th:if="${#lists.isEmpty(recentReviews)}" class="text-center">
+                                    <p>No reviews yet</p>
+                                </div>
+                                <div class="text-center mt-3">
+                                    <a th:href="@{/tutor/reviews}" class="btn btn-link">View All Reviews</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

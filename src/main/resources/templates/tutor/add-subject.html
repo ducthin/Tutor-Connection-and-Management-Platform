@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Add New Subject</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 offset-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Add New Subject</h2>
+                        </div>
+                        <div class="card-body">
+                            <form th:action="@{/tutor/subjects/add}" method="post">
+                                <!-- Alert for feedback -->
+                                <div th:if="${success}" class="alert alert-success" role="alert" th:text="${success}"></div>
+                                <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+
+                                <div class="mb-3">
+                                    <label for="subjectId" class="form-label">Subject</label>
+                                    <select class="form-select" id="subjectId" name="subjectId" required>
+                                        <option value="">Select a subject</option>
+                                        <option th:each="subject : ${allSubjects}"
+                                                th:value="${subject.id}"
+                                                th:text="${subject.name}">
+                                            Mathematics
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="experienceYears" class="form-label">Years of Experience</label>
+                                    <input type="number" class="form-control" id="experienceYears" 
+                                           name="experienceYears" min="0" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="rate" class="form-label">Rate per Hour ($)</label>
+                                    <input type="number" class="form-control" id="rate" 
+                                           name="rate" step="0.01" min="0" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Description</label>
+                                    <textarea class="form-control" id="description" name="description" 
+                                              rows="3" required></textarea>
+                                </div>
+
+                                <div class="d-flex justify-content-between">
+                                    <a th:href="@{/tutor/subjects}" class="btn btn-secondary">Cancel</a>
+                                    <button type="submit" class="btn btn-primary">Add Subject</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

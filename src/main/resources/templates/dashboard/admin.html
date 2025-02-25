@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Admin Dashboard</title>
+    <style>
+        .stat-card {
+            border-radius: 10px;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .activity-card {
+            border-left: 4px solid #6c757d;
+        }
+        .user-card {
+            border: none;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+        }
+        .stat-icon {
+            font-size: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .status-active {
+            background-color: #28a745;
+        }
+        .status-pending {
+            background-color: #ffc107;
+        }
+        .status-inactive {
+            background-color: #dc3545;
+        }
+        .recent-activity {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container py-4">
+            <!-- Welcome Section -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Admin Dashboard</h2>
+                <div>
+                    <a th:href="@{/admin/settings}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
+                    <a th:href="@{/admin/logs}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list"></i> System Logs
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card stat-card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="stat-icon bg-white text-primary me-3">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div>
+                                    <h6 class="card-subtitle mb-1">Total Users</h6>
+                                    <h3 class="card-title mb-0" th:text="${totalUsers}">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="stat-icon bg-white text-success me-3">
+                                    <i class="fas fa-chalkboard-teacher"></i>
+                                </div>
+                                <div>
+                                    <h6 class="card-subtitle mb-1">Active Tutors</h6>
+                                    <h3 class="card-title mb-0" th:text="${activeTutors}">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="stat-icon bg-white text-info me-3">
+                                    <i class="fas fa-user-graduate"></i>
+                                </div>
+                                <div>
+                                    <h6 class="card-subtitle mb-1">Active Students</h6>
+                                    <h3 class="card-title mb-0" th:text="${activeStudents}">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="stat-icon bg-white text-warning me-3">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div>
+                                    <h6 class="card-subtitle mb-1">Today's Sessions</h6>
+                                    <h3 class="card-title mb-0" th:text="${todaySessions}">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Recent Activity -->
+                <div class="col-md-8 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Recent Activity</h5>
+                            <div>
+                                <button class="btn btn-sm btn-outline-secondary me-2">
+                                    <i class="fas fa-filter"></i> Filter
+                                </button>
+                                <a th:href="@{/admin/activity}" class="btn btn-sm btn-outline-primary">View All</a>
+                            </div>
+                        </div>
+                        <div class="card-body recent-activity">
+                            <div th:each="activity : ${recentActivity}" class="card activity-card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6 class="card-title" th:text="${activity.type}">Activity Type</h6>
+                                            <p class="card-text" th:text="${activity.description}">Description</p>
+                                            <small class="text-muted">
+                                                <i class="far fa-user me-1"></i>
+                                                <span th:text="${activity.user}">User</span>
+                                            </small>
+                                        </div>
+                                        <small class="text-muted" th:text="${activity.time}">Time</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Status -->
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">System Status</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Database
+                                    <span class="status-indicator status-active" title="Online"></span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Email Service
+                                    <span class="status-indicator status-active" title="Online"></span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Payment Gateway
+                                    <span class="status-indicator status-active" title="Online"></span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    File Storage
+                                    <span class="status-indicator status-active" title="Online"></span>
+                                </li>
+                            </ul>
+
+                            <div class="mt-4">
+                                <h6>Quick Stats</h6>
+                                <div class="progress mb-3" style="height: 20px;">
+                                    <div class="progress-bar" role="progressbar" 
+                                         th:style="'width: ' + ${diskUsage} + '%'"
+                                         th:text="${diskUsage + '% Disk Usage'}">
+                                        Disk Usage
+                                    </div>
+                                </div>
+                                <div class="progress mb-3" style="height: 20px;">
+                                    <div class="progress-bar bg-info" role="progressbar" 
+                                         th:style="'width: ' + ${memoryUsage} + '%'"
+                                         th:text="${memoryUsage + '% Memory Usage'}">
+                                        Memory Usage
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">Administrative Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <a th:href="@{/admin/users}" class="btn btn-outline-primary w-100 py-3">
+                                        <i class="fas fa-user-shield fa-2x mb-2"></i>
+                                        <br>User Management
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a th:href="@{/admin/tutors/verify}" class="btn btn-outline-success w-100 py-3">
+                                        <i class="fas fa-user-check fa-2x mb-2"></i>
+                                        <br>Verify Tutors
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a th:href="@{/admin/subjects}" class="btn btn-outline-info w-100 py-3">
+                                        <i class="fas fa-book fa-2x mb-2"></i>
+                                        <br>Manage Subjects
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a th:href="@{/admin/reports}" class="btn btn-outline-warning w-100 py-3">
+                                        <i class="fas fa-chart-line fa-2x mb-2"></i>
+                                        <br>View Reports
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

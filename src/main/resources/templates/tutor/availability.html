@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Manage Availability</title>
+    <style>
+        .table td {
+            vertical-align: middle;
+            min-width: 100px;
+            height: 50px;
+        }
+        .table th:first-child {
+            width: 100px;
+        }
+        .table th {
+            text-align: center;
+            background-color: #f8f9fa;
+        }
+        .btn-outline-secondary {
+            border: none;
+            opacity: 0.2;
+        }
+        .btn-outline-secondary:hover {
+            opacity: 1;
+            background: none;
+            color: #6c757d;
+        }
+        .badge.bg-success {
+            font-size: 0.9em;
+            padding: 0.5em 0.7em;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <!-- Alert for feedback -->
+                    <div th:if="${success}" class="alert alert-success" role="alert" th:text="${success}"></div>
+                    <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+
+                    <!-- Calendar View -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="mb-0">Weekly Availability</h4>
+                            <small class="text-muted">Click + to add a time slot, × to remove</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Monday</th>
+                                            <th>Tuesday</th>
+                                            <th>Wednesday</th>
+                                            <th>Thursday</th>
+                                            <th>Friday</th>
+                                            <th>Saturday</th>
+                                            <th>Sunday</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="slot : ${timeSlots}">
+                                            <td th:text="${slot}"></td>
+                                            <td th:each="day : ${days}">
+                                                <th:block th:with="avail=${availabilityMatrix[day].get(slot)}">
+                                                    <div th:if="${avail}" class="d-flex justify-content-between align-items-center">
+                                                        <span class="badge bg-success">Available</span>
+                                                        <form th:action="@{/tutor/availability/__${avail.id}__/delete}"
+                                                              method="post" class="d-inline ms-2"
+                                                              onsubmit="return confirm('Remove this time slot?');">
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                                <i class="fas fa-times"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                    <div th:unless="${avail}" class="text-center">
+                                                        <form th:action="@{/tutor/availability/add}" method="post" class="d-inline">
+                                                            <input type="hidden" name="dayOfWeek" th:value="${day}">
+                                                            <input type="hidden" name="startTime" th:value="${slot}">
+                                                            <input type="hidden" name="endTime"
+                                                                   th:value="${T(java.time.LocalTime).parse(slot).plusHours(1).format(T(java.time.format.DateTimeFormatter).ofPattern('HH:mm'))}">
+                                                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                                                <i class="fas fa-plus"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </th:block>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+</body>
+</html>

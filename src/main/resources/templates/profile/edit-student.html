@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Edit Student Profile</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 offset-md-2">
+                    <h2>Edit Profile</h2>
+                    
+                    <div class="card">
+                        <div class="card-body">
+                            <!-- Alert Messages -->
+                            <div th:if="${success}" class="alert alert-success" role="alert">
+                                <span th:text="${success}">Success message</span>
+                            </div>
+                            <div th:if="${error}" class="alert alert-danger" role="alert">
+                                <span th:text="${error}">Error message</span>
+                            </div>
+
+                            <form th:action="@{/profile/edit/student}" method="post" th:object="${studentProfileUpdateDTO}" enctype="multipart/form-data">
+                                <!-- Profile Picture -->
+                                <div class="mb-4">
+                                    <label for="profilePicture" class="form-label">Profile Picture</label>
+                                    <input type="file" class="form-control" id="profilePicture" name="profilePicture"
+                                           accept="image/jpeg,image/png,image/gif,image/webp"
+                                           th:classappend="${param.uploadError != null} ? 'is-invalid'">
+                                    <div class="text-muted">Upload your profile picture (Max 5MB, JPEG, PNG, GIF or WebP)</div>
+                                    <div class="invalid-feedback" th:if="${param.uploadError != null}">
+                                        Failed to upload profile picture. Please try again.
+                                    </div>
+                                    <div id="currentPicture" class="mt-3">
+                                        <div th:if="${user.profilePictureUrl}" class="d-flex align-items-center">
+                                            <img th:src="${user.profilePictureUrl}"
+                                                 alt="Current profile picture"
+                                                 class="img-thumbnail me-3"
+                                                 style="max-width: 150px; max-height: 150px; object-fit: cover;">
+                                            <small class="text-muted">Current profile picture</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Basic Information -->
+                                <div class="mb-3">
+                                    <label for="fullName" class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="fullName" th:field="*{fullName}" 
+                                           th:value="${user.fullName}" required>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('fullName')}"
+                                         th:errors="*{fullName}">Full name error</div>
+                                    <div class="form-text text-danger" th:if="${#fields.hasErrors('fullName')}"
+                                         th:errors="*{fullName}">Full name error</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="phoneNumber" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phoneNumber" th:field="*{phoneNumber}"
+                                           th:classappend="${#fields.hasErrors('phoneNumber')} ? 'is-invalid'">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('phoneNumber')}"
+                                         th:errors="*{phoneNumber}">Phone number error</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" th:value="${user.email}" readonly>
+                                    <div class="form-text">Email cannot be changed</div>
+                                </div>
+
+                                <!-- Student-specific Information -->
+                                <div class="mb-3">
+                                    <label for="learningPreferences" class="form-label">Learning Preferences</label>
+                                    <textarea class="form-control" id="learningPreferences"
+                                            th:field="*{learningPreferences}" rows="3"
+                                            th:classappend="${#fields.hasErrors('learningPreferences')} ? 'is-invalid'"
+                                            placeholder="Describe your preferred learning style..."></textarea>
+                                    <div class="invalid-feedback"
+                                         th:if="${#fields.hasErrors('learningPreferences')}"
+                                         th:errors="*{learningPreferences}">Learning preferences error</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="subjectsOfInterest" class="form-label">Subjects of Interest</label>
+                                    <textarea class="form-control" id="subjectsOfInterest"
+                                            th:field="*{subjectsOfInterest}" rows="3"
+                                            th:classappend="${#fields.hasErrors('subjectsOfInterest')} ? 'is-invalid'"
+                                            placeholder="List subjects you're interested in learning..."></textarea>
+                                    <div class="invalid-feedback"
+                                         th:if="${#fields.hasErrors('subjectsOfInterest')}"
+                                         th:errors="*{subjectsOfInterest}">Subjects of interest error</div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    <a th:href="@{/profile}" class="btn btn-secondary">Cancel</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
