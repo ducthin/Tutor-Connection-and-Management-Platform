@@ -178,32 +178,41 @@ public class SessionServiceImpl implements SessionService {
             sessionDTO.setNotes(createDTO.getNotes());
             
             // Calculate price
-            TutorSubjectDTO tutorSubject = tutorService.getTutorSubjectByIds(createDTO.getTutorId(), createDTO.getSubjectId());
+            List<TutorSubjectDTO> tutorSubjects = tutorService.getTutorSubjects(createDTO.getTutorId());
+            TutorSubjectDTO tutorSubject = tutorSubjects.stream()
+                .filter(ts -> ts.getSubjectId().equals(createDTO.getSubjectId()))
+                .findFirst()
+                .orElse(null);
+
             if (tutorSubject == null) {
                 throw new IllegalArgumentException("Gia sư không dạy môn học này");
             }
-            
+
             // Duration in hours (for now, just a fixed 1-hour session)
             // In the future, could calculate based on start and end times
-            BigDecimal duration = BigDecimal.ONE;
-            BigDecimal price = tutorSubject.getHourlyRate().multiply(duration);
-            sessionDTO.setPrice(price);
-            
+            double duration = 1.0;
+            double price = tutorSubject.getHourlyRate() * duration;
+
             // Validate time slot
             validateTimeSlot(sessionDTO);
             debugInfo.append("Đã qua xác thực khung giờ thành công!\n");
 
             // Create session entity
             Session session = new Session();
-            session.setStudent(studentRepository.findById(createDTO.getStudentId())
-                    .orElseThrow(() -> new IllegalArgumentException("Học viên không tồn tại")));
-            
-            session.setTutor(tutorRepository.findById(createDTO.getTutorId())
-                    .orElseThrow(() -> new IllegalArgumentException("Gia sư không tồn tại")));
-            
-            session.setSubject(subjectRepository.findById(createDTO.getSubjectId())
-                    .orElseThrow(() -> new IllegalArgumentException("Môn học không tồn tại")));
-            
+
+            // Sử dụng đối tượng từ service thay vì repository
+            Student student = new Student();
+            student.setId(createDTO.getStudentId());
+            session.setStudent(student);
+
+            Tutor tutor = new Tutor();
+            tutor.setId(createDTO.getTutorId());
+            session.setTutor(tutor);
+
+            Subject subject = new Subject();
+            subject.setId(createDTO.getSubjectId());
+            session.setSubject(subject);
+
             session.setStartTime(startDateTime);
             session.setEndTime(endDateTime);
             session.setPrice(price);
@@ -213,13 +222,8 @@ public class SessionServiceImpl implements SessionService {
             // Save session
             session = sessionRepository.save(session);
             
-            // Return DTO
-            sessionDTO.setId(session.getId());
-            sessionDTO.setStatus(session.getStatus().name());
-            
-            debugInfo.append("Đã lưu phiên thành công với ID: ").append(session.getId()).append("\n");
-            
-            return sessionDTO;
+            // Return DTO with correct status setter
+            return convertToDTO(session);
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Lỗi định dạng ngày giờ: " + e.getMessage(), e);
         } catch (Exception e) {
