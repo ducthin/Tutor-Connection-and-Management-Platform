@@ -8,14 +8,14 @@
 <body>
     <div layout:fragment="content">
         <!-- Debug Info -->
-        <div class="container-fluid mb-3" th:if="${@environment.getProperty('app.debug') == 'true'}">
-            <div class="alert alert-info">
+        <!-- <div class="container-fluid mb-3" th:if="${@environment.getProperty('app.debug') == 'true'}"> -->
+            <!-- <div class="alert alert-info">
                 <h5>Debug Information:</h5>
                 <p>Has Student: <span th:text="${hasStudent}">false</span></p>
                 <p>Has Sessions: <span th:text="${hasSessions}">false</span></p>
                 <p>Session Count: <span th:text="${sessionCount}">0</span></p>
             </div>
-        </div>
+        </div> -->
 
         <!-- Error Messages -->
         <div class="container-fluid mb-3" th:if="${error}">

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>System Settings</title>
+    <style>
+        .settings-card {
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+        .settings-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .settings-icon {
+            font-size: 1.5rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+        .nav-pills .nav-link {
+            border-radius: 10px;
+            margin-bottom: 5px;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container py-4">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>System Settings</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a th:href="@{/admin/dashboard}">Admin Dashboard</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">System Settings</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a th:href="@{/admin/dashboard}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <!-- Error & Success Messages -->
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <span th:text="${error}">Error message</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <span th:text="${success}">Success message</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
+            <!-- Settings Content -->
+            <div class="row">
+                <!-- Navigation Sidebar -->
+                <div class="col-md-3">
+                    <div class="card settings-card">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">Settings Menu</h5>
+                            <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
+                                <button class="nav-link active" id="v-pills-general-tab" data-bs-toggle="pill" data-bs-target="#v-pills-general" type="button" role="tab" aria-controls="v-pills-general" aria-selected="true">
+                                    <i class="bi bi-gear me-2"></i> General Settings
+                                </button>
+                                <button class="nav-link" id="v-pills-security-tab" data-bs-toggle="pill" data-bs-target="#v-pills-security" type="button" role="tab" aria-controls="v-pills-security" aria-selected="false">
+                                    <i class="bi bi-shield-lock me-2"></i> Security & Privacy
+                                </button>
+                                <button class="nav-link" id="v-pills-email-tab" data-bs-toggle="pill" data-bs-target="#v-pills-email" type="button" role="tab" aria-controls="v-pills-email" aria-selected="false">
+                                    <i class="bi bi-envelope me-2"></i> Email Settings
+                                </button>
+                                <button class="nav-link" id="v-pills-payment-tab" data-bs-toggle="pill" data-bs-target="#v-pills-payment" type="button" role="tab" aria-controls="v-pills-payment" aria-selected="false">
+                                    <i class="bi bi-credit-card me-2"></i> Payment Settings
+                                </button>
+                                <button class="nav-link" id="v-pills-notification-tab" data-bs-toggle="pill" data-bs-target="#v-pills-notification" type="button" role="tab" aria-controls="v-pills-notification" aria-selected="false">
+                                    <i class="bi bi-bell me-2"></i> Notification Settings
+                                </button>
+                                <button class="nav-link" id="v-pills-storage-tab" data-bs-toggle="pill" data-bs-target="#v-pills-storage" type="button" role="tab" aria-controls="v-pills-storage" aria-selected="false">
+                                    <i class="bi bi-hdd me-2"></i> File Storage
+                                </button>
+                                <button class="nav-link" id="v-pills-backup-tab" data-bs-toggle="pill" data-bs-target="#v-pills-backup" type="button" role="tab" aria-controls="v-pills-backup" aria-selected="false">
+                                    <i class="bi bi-cloud-arrow-up me-2"></i> Backup & Restore
+                                </button>
+                                <button class="nav-link" id="v-pills-maintenance-tab" data-bs-toggle="pill" data-bs-target="#v-pills-maintenance" type="button" role="tab" aria-controls="v-pills-maintenance" aria-selected="false">
+                                    <i class="bi bi-tools me-2"></i> Maintenance Mode
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- System Information Card -->
+                    <div class="card settings-card">
+                        <div class="card-body">
+                            <h6 class="card-title">System Information</h6>
+                            <div class="mb-2 small">
+                                <span class="text-muted">Version:</span>
+                                <span class="fw-bold">1.2.3</span>
+                            </div>
+                            <div class="mb-2 small">
+                                <span class="text-muted">Last Update:</span>
+                                <span class="fw-bold">2025-02-20</span>
+                            </div>
+                            <div class="mb-2 small">
+                                <span class="text-muted">Database:</span>
+                                <span class="fw-bold">MySQL 8.0.28</span>
+                            </div>
+                            <div class="mb-2 small">
+                                <span class="text-muted">Environment:</span>
+                                <span class="fw-bold">Production</span>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary w-100 mt-2">
+                                <i class="bi bi-arrow-repeat me-1"></i> Check for Updates
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Settings Content -->
+                <div class="col-md-9">
+                    <div class="tab-content" id="v-pills-tabContent">
+                        <!-- General Settings Tab -->
+                        <div class="tab-pane fade show active" id="v-pills-general" role="tabpanel" aria-labelledby="v-pills-general-tab">
+                            <div class="card settings-card">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">General Settings</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form>
+                                        <div class="mb-3">
+                                            <label for="siteName" class="form-label">Platform Name</label>
+                                            <input type="text" class="form-control" id="siteName" value="Tutor Connection Management Platform">
+                                            <div class="form-text">This name will appear in the header and other places throughout the site.</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="siteDescription" class="form-label">Platform Description</label>
+                                            <textarea class="form-control" id="siteDescription" rows="3">Connecting students with qualified tutors for effective learning experiences.</textarea>
+                                            <div class="form-text">Brief description used in metadata and for SEO purposes.</div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="contactEmail" class="form-label">Contact Email</label>
+                                                <input type="email" class="form-control" id="contactEmail" value="support@tcmp.com">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="contactPhone" class="form-label">Contact Phone</label>
+                                                <input type="text" class="form-control" id="contactPhone" value="(+84) 0793637555">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="timezone" class="form-label">Default Timezone</label>
+                                            <select class="form-select" id="timezone">
+                                                <option value="UTC">UTC</option>
+                                                <option value="Asia/Bangkok" selected>Asia/Bangkok (UTC+7)</option>
+                                                <option value="America/New_York">America/New_York (UTC-5)</option>
+                                                <option value="Europe/London">Europe/London (UTC+0)</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="dateFormat" class="form-label">Date Format</label>
+                                            <select class="form-select" id="dateFormat">
+                                                <option value="dd/MM/yyyy">DD/MM/YYYY</option>
+                                                <option value="MM/dd/yyyy" selected>MM/DD/YYYY</option>
+                                                <option value="yyyy-MM-dd">YYYY-MM-DD</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Platform Logo</label>
+                                            <div class="mb-2">
+                                                <img src="/images/logo.png" alt="Logo" height="60" class="border p-2 rounded">
+                                            </div>
+                                            <input type="file" class="form-control" id="logoUpload">
+                                            <div class="form-text">Recommended size: 200x60px. Max size: 500KB.</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Favicon</label>
+                                            <div class="mb-2">
+                                                <img src="/images/favicon.ico" alt="Favicon" height="30" class="border p-2 rounded">
+                                            </div>
+                                            <input type="file" class="form-control" id="faviconUpload">
+                                            <div class="form-text">Recommended size: 32x32px. Format: .ico, .png.</div>
+                                        </div>
+                                        <div class="text-end">
+                                            <button type="submit" class="btn btn-primary">Save Settings</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Security Settings Tab -->
+                        <div class="tab-pane fade" id="v-pills-security" role="tabpanel" aria-labelledby="v-pills-security-tab">
+                            <div class="card settings-card">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Security & Privacy Settings</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form>
+                                        <h6 class="mb-3">Account Security</h6>
+                                        <div class="mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="twoFactorAuth" checked>
+                                                <label class="form-check-label" for="twoFactorAuth">Enable Two-Factor Authentication</label>
+                                            </div>
+                                            <div class="form-text">Require administrators to use 2FA for login.</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="passwordPolicy" class="form-label">Password Policy</label>
+                                            <select class="form-select" id="passwordPolicy">
+                                                <option value="simple">Basic (min. 8 characters)</option>
+                                                <option value="medium" selected>Medium (min. 8 chars with letters and numbers)</option>
+                                                <option value="strong">Strong (min. 10 chars with uppercase, lowercase, numbers, special chars)</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="passwordExpiry" class="form-label">Password Expiry</label>
+                                            <select class="form-select" id="passwordExpiry">
+                                                <option value="0">Never</option>
+                                                <option value="30">30 Days</option>
+                                                <option value="60">60 Days</option>
+                                                <option value="90" selected>90 Days</option>
+                                                <option value="180">180 Days</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="loginAttempts" class="form-label">Max Login Attempts</label>
+                                            <select class="form-select" id="loginAttempts">
+                                                <option value="3">3 Attempts</option>
+                                                <option value="5" selected>5 Attempts</option>
+                                                <option value="10">10 Attempts</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <hr class="my-4">
+                                        
+                                        <h6 class="mb-3">Data Protection</h6>
+                                        <div class="mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="dataEncryption" checked>
+                                                <label class="form-check-label" for="dataEncryption">Enable Data Encryption</label>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="dataRetention" class="form-label">User Data Retention Period</label>
+                                            <select class="form-select" id="dataRetention">
+                                                <option value="1">1 Year</option>
+                                                <option value="2">2 Years</option>
+                                                <option value="3" selected>3 Years</option>
+                                                <option value="5">5 Years</option>
+                                                <option value="0">Forever</option>
+                                            </select>
+                                            <div class="form-text">Period to retain user data after account deletion.</div>
+                                        </div>
+                                        
+                                        <div class="text-end">
+                                            <button type="submit" class="btn btn-primary">Save Settings</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Other settings tabs as needed -->
+                        
+                        <!-- Payment Settings Tab -->
+                        <div class="tab-pane fade" id="v-pills-payment" role="tabpanel" aria-labelledby="v-pills-payment-tab">
+                            <div class="card settings-card">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Payment Settings</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form>
+                                        <div class="mb-3">
+                                            <label for="paymentGateway" class="form-label">Default Payment Gateway</label>
+                                            <select class="form-select" id="paymentGateway">
+                                                <option value="stripe" selected>Stripe</option>
+                                                <option value="paypal">PayPal</option>
+                                                <option value="razorpay">Razorpay</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="currency" class="form-label">Default Currency</label>
+                                            <select class="form-select" id="currency">
+                                                <option value="USD" selected>USD ($)</option>
+                                                <option value="EUR">EUR (€)</option>
+                                                <option value="GBP">GBP (£)</option>
+                                                <option value="VND">VND (₫)</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="platformFee" class="form-label">Platform Fee (%)</label>
+                                            <input type="number" class="form-control" id="platformFee" value="15">
+                                            <div class="form-text">Percentage fee that platform keeps from each transaction.</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="minPayoutAmount" class="form-label">Minimum Payout Amount</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="minPayoutAmount" value="50">
+                                            </div>
+                                            <div class="form-text">Tutors must have at least this amount before requesting a payout.</div>
+                                        </div>
+                                        
+                                        <div class="text-end">
+                                            <button type="submit" class="btn btn-primary">Save Settings</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Maintenance Mode Tab -->
+                        <div class="tab-pane fade" id="v-pills-maintenance" role="tabpanel" aria-labelledby="v-pills-maintenance-tab">
+                            <div class="card settings-card">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Maintenance Mode</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-warning">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        Enabling maintenance mode will make the site inaccessible to regular users. Only administrators will be able to access the site.
+                                    </div>
+                                    
+                                    <form>
+                                        <div class="mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="maintenanceMode">
+                                                <label class="form-check-label" for="maintenanceMode">Enable Maintenance Mode</label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="maintenanceMessage" class="form-label">Maintenance Message</label>
+                                            <textarea class="form-control" id="maintenanceMessage" rows="3">We're currently performing scheduled maintenance. Please check back soon.</textarea>
+                                            <div class="form-text">This message will be displayed to users during maintenance.</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="expectedUptime" class="form-label">Expected Uptime</label>
+                                            <input type="datetime-local" class="form-control" id="expectedUptime">
+                                            <div class="form-text">When do you expect the site to be back online?</div>
+                                        </div>
+                                        
+                                        <div class="text-end">
+                                            <button type="submit" class="btn btn-danger">Update Maintenance Status</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script layout:fragment="script">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Show/hide password functionality
+            document.querySelectorAll('.show-password-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const passwordInput = this.previousElementSibling;
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

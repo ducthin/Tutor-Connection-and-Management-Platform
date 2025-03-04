@@ -90,23 +90,36 @@
                 </div>
             </div>
 
-            <!-- Featured Subjects -->
+            <!-- Popular Subjects -->
             <div class="mt-5">
                 <h3 class="text-center mb-4">Popular Subjects</h3>
                 <div class="row row-cols-2 row-cols-md-4 g-4">
-                    <div class="col" th:each="subject : ${subjects}">
-                        <a th:href="@{/tutors/results(subjectId=${subject.id})}" 
+                    <div class="col" th:each="subject : ${subjects}" th:if="${subject.active}">
+                        <a th:href="@{/tutors/results(subjectId=${subject.id})}"
                            class="text-decoration-none">
-                            <div class="card h-100 text-center">
+                            <div class="card h-100 text-center hover-effect">
                                 <div class="card-body">
                                     <i class="bi bi-book display-6 text-primary mb-3"></i>
                                     <h5 class="card-title" th:text="${subject.name}">Subject</h5>
+                                    <div class="text-muted small" th:if="${subject.tutorCount > 0}">
+                                        <span th:text="${subject.tutorCount}">0</span> tutors
+                                    </div>
                                 </div>
                             </div>
                         </a>
                     </div>
                 </div>
             </div>
+
+            <style>
+                .hover-effect {
+                    transition: transform 0.2s, box-shadow 0.2s;
+                }
+                .hover-effect:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+                }
+            </style>
         </div>
     </div>
 </body>

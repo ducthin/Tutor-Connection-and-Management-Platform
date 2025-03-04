@@ -1,8 +1,6 @@
 package com.upsilon.TCMP.service.impl;
 
 import com.upsilon.TCMP.dto.*;
-import com.upsilon.TCMP.entity.Session;
-import com.upsilon.TCMP.entity.Subject;
 import com.upsilon.TCMP.entity.Student;
 import com.upsilon.TCMP.entity.User;
 import com.upsilon.TCMP.repository.StudentRepository;

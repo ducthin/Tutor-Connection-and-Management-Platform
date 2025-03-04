@@ -4,146 +4,192 @@
       layout:decorate="~{layout/base}">
 <head>
     <title>Edit Tutor Profile</title>
+    <style>
+        .nav-tabs .nav-link {
+            color: #6c757d;
+            border: none;
+            padding: 1rem 1.5rem;
+            font-weight: 500;
+        }
+        .nav-tabs .nav-link.active {
+            color: #0d6efd;
+            border: none;
+            border-bottom: 2px solid #0d6efd;
+            background: none;
+        }
+        .form-label {
+            font-weight: 500;
+            color: #344767;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        .card-header {
+            border-bottom: 1px solid rgba(0,0,0,.08);
+        }
+        .btn-light {
+            background-color: #f8f9fa;
+            border-color: #f0f0f0;
+        }
+        .btn-light:hover {
+            background-color: #e9ecef;
+            border-color: #e9ecef;
+        }
+    </style>
 </head>
 <body>
     <div layout:fragment="content">
-        <div class="container">
+        <div class="container py-4">
             <div class="row">
-                <div class="col-md-12">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2>Edit Profile</h2>
-                        <a href="/tutor/profile" class="btn btn-outline-secondary">Back to Profile</a>
-                    </div>
+                <div class="col-md-10 offset-md-1">
+                    <h2 class="mb-4">Edit Profile</h2>
                     
-                    <form id="editProfileForm" th:action="@{/tutor/profile/edit}" method="post" class="needs-validation" enctype="multipart/form-data" novalidate>
-                        <!-- Basic Information -->
-                        <div class="card mb-4">
-                            <div class="card-body">
-                                <h5 class="card-title">Basic Information</h5>
-                                
-                               <div class="mb-3">
-                                   <label for="profilePicture" class="form-label">Profile Picture</label>
-                                   <input type="file" class="form-control" id="profilePicture" name="profilePicture"
-                                          accept="image/*">
-                                   <div class="text-muted">Upload a professional profile picture</div>
-                                   <div id="currentPicture" class="mt-2">
-                                       <img th:if="${tutor.user.profilePictureUrl}"
-                                            th:src="${tutor.user.profilePictureUrl}"
-                                            alt="Current profile picture"
-                                            class="img-thumbnail"
-                                            style="max-width: 150px;">
-                                   </div>
-                               </div>
-
-                               <div class="mb-3">
-                                   <label for="fullName" class="form-label">Full Name</label>
-                                   <input type="text" class="form-control" id="fullName" name="fullName"
-                                          th:value="${tutor.user.fullName}" required>
-                                   <div class="invalid-feedback">Please enter your full name</div>
-                               </div>
-
-                                <div class="mb-3">
-                                    <label for="phoneNumber" class="form-label">Phone Number</label>
-                                    <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber"
-                                           th:value="${tutor.user.phoneNumber}">
-                                    <div class="text-muted">Optional - Add your contact number</div>
-                                </div>
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" data-bs-toggle="tab" href="#basic" role="tab">Basic Information</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-bs-toggle="tab" href="#teaching" role="tab">Teaching Details</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-bs-toggle="tab" href="#availability" role="tab">Availability</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="card-body">
+                            <!-- Alert Messages -->
+                            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                                <span th:text="${success}">Success message</span>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
-                        </div>
-
-                        <!-- Professional Information -->
-                        <div class="card mb-4">
-                            <div class="card-body">
-                                <h5 class="card-title">Professional Information</h5>
-
-                                <div class="mb-3">
-                                    <label for="bio" class="form-label">Bio</label>
-                                    <textarea class="form-control" id="bio" name="bio" rows="4"
-                                              th:text="${tutor.bio}"></textarea>
-                                    <div class="text-muted">Tell students about yourself and your teaching style</div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="qualifications" class="form-label">Qualifications</label>
-                                    <textarea class="form-control" id="qualifications" name="qualifications" rows="3"
-                                              th:text="${tutor.qualifications}" required></textarea>
-                                    <div class="invalid-feedback">Please enter your qualifications</div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="subjectsTaught" class="form-label">Subjects Taught Overview</label>
-                                    <textarea class="form-control" id="subjectsTaught" name="subjectsTaught" rows="3"
-                                              th:text="${tutor.subjectsTaught}" required></textarea>
-                                    <div class="invalid-feedback">Please enter the subjects you teach</div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="hourlyRate" class="form-label">Base Hourly Rate ($)</label>
-                                    <input type="number" class="form-control" id="hourlyRate" name="hourlyRate"
-                                           th:value="${tutor.hourlyRate}" step="0.01" min="0" required>
-                                    <div class="invalid-feedback">Please enter a valid hourly rate</div>
-                                    <div class="text-muted">You can set different rates for specific subjects later</div>
-                                </div>
+                            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <span th:text="${error}">Error message</span>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
-                        </div>
 
-                        <div class="d-flex justify-content-between mb-4">
-                            <a href="/tutor/profile" class="btn btn-secondary">Cancel</a>
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <form th:action="@{/profile/edit/tutor}" method="post" th:object="${tutorProfileUpdateDTO}" enctype="multipart/form-data">
+                                <div class="tab-content">
+                                    <!-- Basic Information Tab -->
+                                    <div class="tab-pane fade show active" id="basic" role="tabpanel">
+                                        <!-- Profile Picture -->
+                                        <div class="mb-4">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div th:if="${user.profilePictureUrl}" class="position-relative me-4">
+                                                    <img th:src="${user.profilePictureUrl}"
+                                                         alt="Current profile picture"
+                                                         class="rounded-circle"
+                                                         style="width: 120px; height: 120px; object-fit: cover;">
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <label for="profilePicture" class="form-label">Profile Picture</label>
+                                                    <input type="file" class="form-control" id="profilePicture" name="profilePicture"
+                                                           accept="image/jpeg,image/png,image/gif,image/webp"
+                                                           th:classappend="${param.uploadError != null} ? 'is-invalid'">
+                                                    <div class="text-muted small mt-1">Max 5MB, JPEG, PNG, GIF or WebP</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Basic Information -->
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="fullName" class="form-label">Full Name</label>
+                                                <input type="text" class="form-control" id="fullName" th:field="*{fullName}"
+                                                       required>
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('fullName')}"
+                                                     th:errors="*{fullName}">Full name error</div>
+                                            </div>
+
+                                            <div class="col-md-6 mb-3">
+                                                <label for="phoneNumber" class="form-label">Phone Number</label>
+                                                <input type="tel" class="form-control" id="phoneNumber" th:field="*{phoneNumber}"
+                                                       th:classappend="${#fields.hasErrors('phoneNumber')} ? 'is-invalid'">
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('phoneNumber')}"
+                                                     th:errors="*{phoneNumber}">Phone number error</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <label for="email" class="form-label">Email</label>
+                                            <input type="email" class="form-control bg-light" id="email" th:value="${user.email}" readonly>
+                                            <div class="form-text">Email cannot be changed</div>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <label for="bio" class="form-label">Bio</label>
+                                            <textarea class="form-control" id="bio" th:field="*{bio}" rows="4"
+                                                    th:classappend="${#fields.hasErrors('bio')} ? 'is-invalid'"
+                                                    placeholder="Tell students about yourself and your teaching style..."></textarea>
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('bio')}"
+                                                 th:errors="*{bio}">Bio error</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Teaching Details Tab -->
+                                    <div class="tab-pane fade" id="teaching" role="tabpanel">
+                                        <div class="mb-4">
+                                            <label for="qualifications" class="form-label">Qualifications</label>
+                                            <textarea class="form-control" id="qualifications" th:field="*{qualifications}" rows="3"
+                                                    th:classappend="${#fields.hasErrors('qualifications')} ? 'is-invalid'"
+                                                    placeholder="List your educational qualifications and certifications..."></textarea>
+                                            <div class="invalid-feedback" th:if="${#fields.hasErrors('qualifications')}"
+                                                 th:errors="*{qualifications}">Qualifications error</div>
+                                        </div>
+
+                                        <div class="card mb-4">
+                                            <div class="card-header bg-light">
+                                                <h5 class="card-title mb-0">Teaching Subjects</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label for="subjectsTaught" class="form-label">Your Teaching Subjects</label>
+                                                    <textarea class="form-control" id="subjectsTaught" th:field="*{subjectsTaught}" rows="3"
+                                                            th:classappend="${#fields.hasErrors('subjectsTaught')} ? 'is-invalid'"
+                                                            placeholder="List the subjects you teach..."></textarea>
+                                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('subjectsTaught')}"
+                                                         th:errors="*{subjectsTaught}">Subjects taught error</div>
+                                                    <div class="form-text">List your subjects and areas of expertise. You can manage specific subjects and rates in detail after completing your profile.</div>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label for="hourlyRate" class="form-label">Base Hourly Rate ($)</label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text">$</span>
+                                                        <input type="number" class="form-control" id="hourlyRate" th:field="*{hourlyRate}"
+                                                               th:classappend="${#fields.hasErrors('hourlyRate')} ? 'is-invalid'"
+                                                               step="0.01" min="0.01" required>
+                                                    </div>
+                                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('hourlyRate')}"
+                                                         th:errors="*{hourlyRate}">Hourly rate error</div>
+                                                    <div class="text-muted small">You can set different rates for specific subjects later</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Availability Tab -->
+                                    <div class="tab-pane fade" id="availability" role="tabpanel">
+                                        <div class="alert alert-info">
+                                            <h5 class="alert-heading">Set Your Availability</h5>
+                                            <p class="mb-0">You can manage your detailed teaching schedule in the calendar section after completing your profile.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Buttons - Fixed at Bottom -->
+                                <div class="d-flex gap-2 justify-content-between mt-4">
+                                    <a th:href="@{/profile}" class="btn btn-light">Cancel</a>
+                                    <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+                                </div>
+                            </form>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <script th:inline="javascript">
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('editProfileForm');
-            const submitButton = form.querySelector('button[type="submit"]');
-            
-            form.addEventListener('submit', function(event) {
-                event.preventDefault();
-                
-                if (!form.checkValidity()) {
-                    event.stopPropagation();
-                    form.classList.add('was-validated');
-                    return;
-                }
-
-                submitButton.disabled = true;
-                submitButton.innerHTML = 'Saving...';
-
-                const formData = new FormData(form);
-                
-                fetch(form.action, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
-                    },
-                    body: formData
-                }).then(response => {
-                    if (response.ok) {
-                        window.location.href = '/tutor/profile';
-                    } else {
-                        throw new Error('Profile update failed');
-                    }
-                }).catch(error => {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = 'Save Changes';
-                    alert('Failed to update profile: ' + error.message);
-                });
-            });
-
-            // Real-time validation for hourly rate
-            const hourlyRateInput = document.getElementById('hourlyRate');
-            hourlyRateInput.addEventListener('input', function() {
-                const value = parseFloat(this.value);
-                if (value < 0) {
-                    this.value = 0;
-                }
-            });
-        });
-    </script>
 </body>
 </html>

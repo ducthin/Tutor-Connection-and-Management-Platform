@@ -28,7 +28,9 @@ public interface TutorSubjectRepository extends JpaRepository<TutorSubject, Inte
     
     List<TutorSubject> findBySubjectId(Integer subjectId);
     
-    @Query("SELECT ts FROM TutorSubject ts WHERE ts.tutor.id = :tutorId AND ts.active = true")
+    @Query("SELECT DISTINCT ts FROM TutorSubject ts " +
+           "LEFT JOIN FETCH ts.subject s " +
+           "WHERE ts.tutor.id = :tutorId AND ts.active = true")
     List<TutorSubject> findActiveByTutorId(@Param("tutorId") Integer tutorId);
 
     @Query("SELECT COUNT(ts) FROM TutorSubject ts WHERE ts.tutor.id = :tutorId AND ts.active = true")

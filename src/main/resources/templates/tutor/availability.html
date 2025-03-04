@@ -66,7 +66,7 @@
                                         <tr th:each="slot : ${timeSlots}">
                                             <td th:text="${slot}"></td>
                                             <td th:each="day : ${days}">
-                                                <th:block th:with="avail=${availabilityMatrix[day].get(slot)}">
+                                                <th:block th:with="avail=${availabilityMatrix.get(day).get(slot)}">
                                                     <div th:if="${avail}" class="d-flex justify-content-between align-items-center">
                                                         <span class="badge bg-success">Available</span>
                                                         <form th:action="@{/tutor/availability/__${avail.id}__/delete}"
@@ -79,7 +79,7 @@
                                                     </div>
                                                     <div th:unless="${avail}" class="text-center">
                                                         <form th:action="@{/tutor/availability/add}" method="post" class="d-inline">
-                                                            <input type="hidden" name="dayOfWeek" th:value="${day}">
+                                                            <input type="hidden" name="dayOfWeek" th:value="${day.name()}">
                                                             <input type="hidden" name="startTime" th:value="${slot}">
                                                             <input type="hidden" name="endTime"
                                                                    th:value="${T(java.time.LocalTime).parse(slot).plusHours(1).format(T(java.time.format.DateTimeFormatter).ofPattern('HH:mm'))}">

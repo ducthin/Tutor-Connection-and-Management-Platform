@@ -15,6 +15,12 @@ import java.util.Optional;
 
 @Repository
 public interface TutorRepository extends JpaRepository<Tutor, Integer> {
+    @Query("SELECT t FROM Tutor t LEFT JOIN FETCH t.user WHERE t.id = :id")
+    Optional<Tutor> findByIdWithUser(@Param("id") Integer id);
+    
+    @Override
+    @Query("SELECT t FROM Tutor t LEFT JOIN FETCH t.user")
+    List<Tutor> findAll();
     
     Optional<Tutor> findByUserId(Integer userId);
     
@@ -32,28 +38,35 @@ public interface TutorRepository extends JpaRepository<Tutor, Integer> {
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.tutor.id = :tutorId")
     Double getAverageRating(@Param("tutorId") Integer tutorId);
 
-    @Query("SELECT DISTINCT t FROM Tutor t " +
-           "LEFT JOIN t.tutorSubjects ts " +
-           "WHERE (:keyword IS NULL OR " +
-           "   t.user.fullName LIKE %:keyword% OR " +
+    @Query("SELECT DISTINCT t.id FROM Tutor t " +
+           "JOIN t.user u " +
+           "JOIN t.tutorSubjects ts " +
+           "JOIN ts.subject s " +
+           "WHERE ts.active = true " +
+           "AND s.active = true " +
+           "AND (:keyword IS NULL OR " +
+           "   u.fullName LIKE %:keyword% OR " +
            "   t.qualifications LIKE %:keyword% OR " +
            "   t.bio LIKE %:keyword% OR " +
-           "   EXISTS (SELECT ts2 FROM TutorSubject ts2 WHERE ts2.tutor = t AND ts2.description LIKE %:keyword%)) " +
-           "AND (:subjectId IS NULL OR EXISTS (SELECT ts3 FROM TutorSubject ts3 WHERE ts3.tutor = t AND ts3.subject.id = :subjectId)) " +
+           "   ts.description LIKE %:keyword%) " +
+           "AND (:subjectId IS NULL OR s.id = :subjectId) " +
            "AND (:minRating IS NULL OR t.rating >= :minRating) " +
            "AND (:maxRate IS NULL OR t.hourlyRate <= :maxRate) " +
-           "AND (t.isVerified = true) " +
-           "ORDER BY " +
-           "CASE WHEN :sortBy = 'RATING' THEN t.rating END DESC, " +
-           "CASE WHEN :sortBy = 'PRICE_LOW' THEN t.hourlyRate END ASC, " +
-           "CASE WHEN :sortBy = 'PRICE_HIGH' THEN t.hourlyRate END DESC")
-    List<Tutor> searchTutors(
+           "AND t.isVerified = true " +
+           "AND u.active = true")
+    List<Integer> findSearchTutorIds(
         @Param("keyword") String keyword,
         @Param("subjectId") Integer subjectId,
         @Param("minRating") BigDecimal minRating,
-        @Param("maxRate") BigDecimal maxRate,
-        @Param("sortBy") String sortBy
+        @Param("maxRate") BigDecimal maxRate
     );
+
+    @Query("SELECT DISTINCT t FROM Tutor t " +
+           "LEFT JOIN FETCH t.user u " +
+           "LEFT JOIN FETCH t.tutorSubjects ts " +
+           "LEFT JOIN FETCH ts.subject s " +
+           "WHERE t.id IN :tutorIds")
+    List<Tutor> findTutorsWithDetails(@Param("tutorIds") List<Integer> tutorIds);
 
     @Query("SELECT DISTINCT t FROM Tutor t " +
            "JOIN t.tutorSubjects ts " +

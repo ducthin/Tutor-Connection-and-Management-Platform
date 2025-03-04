@@ -7,15 +7,15 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "Tutors")
+@Table(name = "tutors")
 public class Tutor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tutor_id")
     private Integer id;
 
-    @OneToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(name = "tutors_ibfk_1"))
     private User user;
 
     @ManyToMany(mappedBy = "favoriteTutors")

@@ -68,8 +68,8 @@
                                 <div class="btn-group">
                                     <a th:href="@{/tutors/profile/{id}(id=${tutor.id})}"
                                        class="btn btn-outline-primary">View Profile</a>
-                                    <form th:action="@{/tutors/favorites/{id}(id=${tutor.id})}"
-                                          th:method="delete"
+                                    <form th:action="@{/tutors/favorites/{id}/remove(id=${tutor.id})}"
+                                          method="post"
                                           onsubmit="return confirm('Remove this tutor from favorites?');">
                                         <button type="submit" class="btn btn-outline-danger">
                                             <i class="bi bi-heart-fill"></i>

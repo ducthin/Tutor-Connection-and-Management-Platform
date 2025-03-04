@@ -79,6 +79,7 @@ public class SecurityConfig {
                         "/css/**",
                         "/js/**",
                         "/images/**",
+                        "/images/profiles/**",
                         "/static/**",
                         "/webjars/**",
                         "/fonts/**",
@@ -103,7 +104,7 @@ public class SecurityConfig {
                     .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
                     .requestMatchers("/tutor/**").hasAuthority("ROLE_TUTOR")
                     .requestMatchers("/student/**").hasAuthority("ROLE_STUDENT")
-                    .requestMatchers("/tutors", "/tutors/search", "/tutors/results", "/tutors/available").permitAll()
+                    .requestMatchers("/tutors", "/tutors/search", "/tutors/results", "/tutors/available", "/subjects").permitAll()
                     .requestMatchers("/tutors/favorites/**").hasAuthority("ROLE_STUDENT")
                     .requestMatchers("/api/tutors/**").permitAll()
                     .anyRequest().authenticated()

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Verify Tutors</title>
+    <style>
+        .tutor-card {
+            border-radius: 10px;
+            transition: transform 0.2s;
+            margin-bottom: 20px;
+        }
+        .tutor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .tutor-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .document-preview {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .verification-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .filter-section {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container py-4">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>Verify Tutors</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a th:href="@{/admin/dashboard}">Admin Dashboard</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Verify Tutors</li>
+                        </ol>
+                    </nav>
+                </div>
+                <a th:href="@{/admin/dashboard}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+
+            <!-- Error Message -->
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <span th:text="${error}">Error message</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
+            <!-- Success Message -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <span th:text="${success}">Success message</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <form th:action="@{/admin/tutors/verify}" method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="search" name="search" placeholder="Name, Email or ID">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sortBy" class="form-label">Sort By</label>
+                        <select class="form-select" id="sortBy" name="sortBy">
+                            <option value="dateDesc">Date (Newest First)</option>
+                            <option value="dateAsc">Date (Oldest First)</option>
+                            <option value="nameAsc">Name (A-Z)</option>
+                            <option value="nameDesc">Name (Z-A)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="pending" selected>Pending Verification</option>
+                            <option value="all">All Tutors</option>
+                            <option value="verified">Verified</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-white bg-warning">
+                        <div class="card-body d-flex align-items-center">
+                            <i class="bi bi-hourglass-split me-3" style="font-size: 2rem;"></i>
+                            <div>
+                                <h6 class="card-subtitle mb-1">Pending Verification</h6>
+                                <h3 class="card-title mb-0" th:text="${pendingCount != null ? pendingCount : pendingTutors.size()}">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-success">
+                        <div class="card-body d-flex align-items-center">
+                            <i class="bi bi-check-circle-fill me-3" style="font-size: 2rem;"></i>
+                            <div>
+                                <h6 class="card-subtitle mb-1">Verified Tutors</h6>
+                                <h3 class="card-title mb-0" th:text="${verifiedCount != null ? verifiedCount : 0}">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-danger">
+                        <div class="card-body d-flex align-items-center">
+                            <i class="bi bi-x-circle-fill me-3" style="font-size: 2rem;"></i>
+                            <div>
+                                <h6 class="card-subtitle mb-1">Rejected Applications</h6>
+                                <h3 class="card-title mb-0" th:text="${rejectedCount != null ? rejectedCount : 0}">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-info">
+                        <div class="card-body d-flex align-items-center">
+                            <i class="bi bi-people-fill me-3" style="font-size: 2rem;"></i>
+                            <div>
+                                <h6 class="card-subtitle mb-1">Total Tutors</h6>
+                                <h3 class="card-title mb-0" th:text="${totalTutors != null ? totalTutors : 0}">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pending Tutors List -->
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Tutors Pending Verification</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-success me-2" id="verifySelectedBtn" disabled>
+                            <i class="bi bi-check-circle"></i> Verify Selected
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" id="rejectSelectedBtn" disabled>
+                            <i class="bi bi-x-circle"></i> Reject Selected
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- No pending tutors message -->
+                    <div th:if="${#lists.isEmpty(pendingTutors)}" class="text-center py-5">
+                        <i class="bi bi-patch-check text-muted" style="font-size: 3rem;"></i>
+                        <p class="mt-3 text-muted">No pending verification requests.</p>
+                    </div>
+                    
+                    <!-- Pending tutors -->
+                    <div class="row" th:unless="${#lists.isEmpty(pendingTutors)}">
+                        <div class="col-md-6 col-lg-6" th:each="tutor : ${pendingTutors}">
+                            <div class="card tutor-card position-relative">
+                                <div class="card-header bg-white">
+                                    <div class="form-check">
+                                        <input class="form-check-input tutor-select" type="checkbox" th:value="${tutor.id}">
+                                        <label class="form-check-label">
+                                            <span class="badge bg-warning">Pending</span>
+                                        </label>
+                                        <span class="ms-2 text-muted" th:text="${'Submitted on: ' + #temporals.format(tutor.createdAt, 'dd-MM-yyyy')}">
+                                            Submitted on: 01-01-2023
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4 text-center mb-3 mb-md-0">
+                                            <img th:if="${tutor.profileImageUrl}" th:src="${tutor.profileImageUrl}" alt="Profile" class="tutor-avatar mb-2">
+                                            <div th:unless="${tutor.profileImageUrl}" class="tutor-avatar mx-auto mb-2 bg-secondary d-flex align-items-center justify-content-center text-white">
+                                                <span th:text="${#strings.substring(tutor.fullName, 0, 1)}">A</span>
+                                            </div>
+                                            <h6 class="mb-0" th:text="${tutor.fullName}">Tutor Name</h6>
+                                            <p class="text-muted mb-0" th:text="${tutor.email}">tutor@example.com</p>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <div class="mb-3">
+                                                <h6 class="fw-bold">Qualification</h6>
+                                                <p th:text="${tutor.qualification}">Bachelor of Education</p>
+                                            </div>
+                                            <div class="mb-3">
+                                                <h6 class="fw-bold">Subjects</h6>
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    <span class="badge bg-primary" th:each="subject : ${tutor.subjects}" th:text="${subject.name}">Math</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-bold">Verification Documents</h6>
+                                                <div class="d-flex gap-2">
+                                                    <img src="/images/document-placeholder.jpg" alt="Document" class="document-preview" data-bs-toggle="modal" data-bs-target="#documentModal">
+                                                    <img src="/images/document-placeholder.jpg" alt="Document" class="document-preview" data-bs-toggle="modal" data-bs-target="#documentModal">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-footer bg-white">
+                                    <div class="d-flex justify-content-between">
+                                        <button class="btn btn-outline-primary" data-bs-toggle="modal" th:data-bs-target="'#tutorDetailModal' + ${tutor.id}">
+                                            <i class="bi bi-info-circle"></i> View Details
+                                        </button>
+                                        <div>
+                                            <button class="btn btn-outline-danger me-2" th:data-tutor-id="${tutor.id}" onclick="rejectTutor(this)">
+                                                <i class="bi bi-x-circle"></i> Reject
+                                            </button>
+                                            <button class="btn btn-success" th:data-tutor-id="${tutor.id}" onclick="verifyTutor(this)">
+                                                <i class="bi bi-check-circle"></i> Verify
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pagination -->
+                <div th:if="${not #lists.isEmpty(pendingTutors) and pendingTutors.size() > 10}" class="card-footer bg-white">
+                    <nav aria-label="Tutors pagination">
+                        <ul class="pagination justify-content-center mb-0">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1">Previous</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Document Preview Modal -->
+        <div class="modal fade" id="documentModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Document Preview</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img src="/images/document-placeholder.jpg" alt="Document" style="max-width: 100%;">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary">
+                            <i class="bi bi-download"></i> Download
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reject Confirmation Modal -->
+        <div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Reject Tutor</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="rejectForm">
+                            <input type="hidden" id="rejectTutorId" name="tutorId">
+                            <div class="mb-3">
+                                <label for="rejectReason" class="form-label">Reason for Rejection</label>
+                                <select class="form-select" id="rejectReason" name="reason">
+                                    <option value="">Select a reason</option>
+                                    <option value="insufficient_documentation">Insufficient Documentation</option>
+                                    <option value="invalid_documentation">Invalid Documentation</option>
+                                    <option value="qualification_mismatch">Qualification Mismatch</option>
+                                    <option value="experience_verification_failed">Experience Verification Failed</option>
+                                    <option value="other">Other (Please specify)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="rejectComment" class="form-label">Additional Comments</label>
+                                <textarea class="form-control" id="rejectComment" name="comment" rows="3" placeholder="Provide specific details about the rejection reason"></textarea>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="notifyTutorRejection" checked>
+                                <label class="form-check-label" for="notifyTutorRejection">
+                                    Notify tutor about rejection via email
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" onclick="confirmReject()">Confirm Rejection</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script layout:fragment="script">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Handle checkboxes for bulk actions
+            const checkboxes = document.querySelectorAll('.tutor-select');
+            const verifySelectedBtn = document.getElementById('verifySelectedBtn');
+            const rejectSelectedBtn = document.getElementById('rejectSelectedBtn');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateBulkButtons);
+            });
+            
+            function updateBulkButtons() {
+                const checkedBoxes = document.querySelectorAll('.tutor-select:checked');
+                verifySelectedBtn.disabled = checkedBoxes.length === 0;
+                rejectSelectedBtn.disabled = checkedBoxes.length === 0;
+            }
+        });
+        
+        // Function to handle tutor verification
+        function verifyTutor(button) {
+            const tutorId = button.getAttribute('data-tutor-id');
+            if (confirm('Are you sure you want to verify this tutor?')) {
+                // Send verification request to server
+                fetch(`/admin/tutors/${tutorId}/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').getAttribute('content')
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('Error verifying tutor');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while verifying the tutor');
+                });
+            }
+        }
+        
+        // Function to show reject modal
+        function rejectTutor(button) {
+            const tutorId = button.getAttribute('data-tutor-id');
+            document.getElementById('rejectTutorId').value = tutorId;
+            
+            // Show the modal
+            const rejectModal = new bootstrap.Modal(document.getElementById('rejectModal'));
+            rejectModal.show();
+        }
+        
+        // Function to confirm rejection
+        function confirmReject() {
+            const tutorId = document.getElementById('rejectTutorId').value;
+            const reason = document.getElementById('rejectReason').value;
+            const comment = document.getElementById('rejectComment').value;
+            const notifyTutor = document.getElementById('notifyTutorRejection').checked;
+            
+            if (!reason) {
+                alert('Please select a rejection reason');
+                return;
+            }
+            
+            // Send rejection request to server
+            fetch(`/admin/tutors/${tutorId}/reject`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    reason: reason,
+                    comment: comment,
+                    notifyTutor: notifyTutor
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Error rejecting tutor');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while rejecting the tutor');
+            });
+            
+            // Close the modal
+            const rejectModal = bootstrap.Modal.getInstance(document.getElementById('rejectModal'));
+            rejectModal.hide();
+        }
+    </script>
+</body>
+</html>

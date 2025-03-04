@@ -14,4 +14,5 @@ public class TutorDTO {
     private Boolean isVerified;
     private String bio;
     private Double rating;
+    private Integer totalSessions; // Added field for total sessions
 }

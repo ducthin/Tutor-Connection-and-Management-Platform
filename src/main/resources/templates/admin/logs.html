@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>System Logs</title>
+    <style>
+        .log-card {
+            border-radius: 10px;
+            transition: transform 0.2s;
+        }
+        .log-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .filter-section {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .log-entry {
+            border-left: 4px solid #6c757d;
+            margin-bottom: 10px;
+            padding: 10px 15px;
+            background-color: #f8f9fa;
+            border-radius: 0 5px 5px 0;
+            font-family: monospace;
+        }
+        .log-entry.info {
+            border-left-color: #17a2b8;
+        }
+        .log-entry.warning {
+            border-left-color: #ffc107;
+        }
+        .log-entry.error {
+            border-left-color: #dc3545;
+        }
+        .log-entry.debug {
+            border-left-color: #6c757d;
+        }
+        .log-entry pre {
+            margin-bottom: 0;
+            white-space: pre-wrap;
+        }
+        .log-level {
+            font-weight: bold;
+            display: inline-block;
+            width: 70px;
+        }
+        .log-timestamp {
+            color: #6c757d;
+            margin-right: 10px;
+        }
+        .log-controller {
+            color: #007bff;
+        }
+        .log-entry-expandable .log-content {
+            max-height: 100px;
+            overflow: hidden;
+        }
+        .log-entry-expandable.expanded .log-content {
+            max-height: none;
+        }
+        .log-expand-btn {
+            background: none;
+            border: none;
+            color: #007bff;
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container py-4">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>System Logs</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a th:href="@{/admin/dashboard}">Admin Dashboard</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">System Logs</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <button class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#exportLogsModal">
+                        <i class="bi bi-download"></i> Export Logs
+                    </button>
+                    <a th:href="@{/admin/dashboard}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <span th:text="${error}">Error message</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <form th:action="@{/admin/logs}" method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="logLevel" class="form-label">Log Level</label>
+                        <select class="form-select" id="logLevel" name="level">
+                            <option value="">All Levels</option>
+                            <option value="info">Info</option>
+                            <option value="warning">Warning</option>
+                            <option value="error">Error</option>
+                            <option value="debug">Debug</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="dateFrom" class="form-label">From Date</label>
+                        <input type="date" class="form-control" id="dateFrom" name="dateFrom">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="dateTo" class="form-label">To Date</label>
+                        <input type="date" class="form-control" id="dateTo" name="dateTo">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="search" name="search" placeholder="Search logs...">
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-filter"></i> Apply Filter
+                        </button>
+                        <a th:href="@{/admin/logs}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x"></i> Clear Filter
+                        </a>
+                        <div class="float-end">
+                            <div class="btn-group" role="group">
+                                <input type="radio" class="btn-check" name="view" id="viewList" value="list" checked>
+                                <label class="btn btn-outline-secondary" for="viewList">
+                                    <i class="bi bi-list"></i> List View
+                                </label>
+                                <input type="radio" class="btn-check" name="view" id="viewRaw" value="raw">
+                                <label class="btn btn-outline-secondary" for="viewRaw">
+                                    <i class="bi bi-code"></i> Raw View
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Log Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-info text-white text-center">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-1">Total Logs</h6>
+                            <h3 class="card-title mb-0" th:text="${totalLogs != null ? totalLogs : logs.size()}">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white text-center">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-1">Info</h6>
+                            <h3 class="card-title mb-0" th:text="${infoCount != null ? infoCount : 0}">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white text-center">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-1">Warnings</h6>
+                            <h3 class="card-title mb-0" th:text="${warningCount != null ? warningCount : 0}">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white text-center">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-1">Errors</h6>
+                            <h3 class="card-title mb-0" th:text="${errorCount != null ? errorCount : 0}">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- List View -->
+            <div id="listView" class="log-view">
+                <div class="card log-card">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Log Entries</h5>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#clearLogsModal">
+                                <i class="bi bi-trash"></i> Clear Logs
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" id="refreshLogsBtn">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- No logs message -->
+                        <div th:if="${#lists.isEmpty(logs)}" class="text-center py-5">
+                            <i class="bi bi-exclamation-circle text-muted" style="font-size: 3rem;"></i>
+                            <p class="mt-3 text-muted">No log entries found.</p>
+                        </div>
+                        
+                        <!-- Log entries list -->
+                        <div th:unless="${#lists.isEmpty(logs)}" class="mb-3">
+                            <div th:each="log : ${logs}" class="log-entry" th:classappend="${log.level.toLowerCase()}">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <div>
+                                        <span class="log-level" th:text="${log.level}">INFO</span>
+                                        <span class="log-timestamp" th:text="${log.timestamp}">2025-02-25 14:30:45</span>
+                                        <span class="log-controller" th:text="${log.source}">UserController</span>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-sm btn-link p-0" data-bs-toggle="tooltip" title="Copy to Clipboard">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="log-entry-expandable">
+                                    <div class="log-content">
+                                        <pre th:text="${log.message}">Log message details here</pre>
+                                    </div>
+                                    <button class="log-expand-btn mt-1" th:if="${#strings.length(log.message) > 200}">
+                                        Show more <i class="bi bi-chevron-down"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Pagination -->
+                    <div class="card-footer bg-white">
+                        <nav aria-label="Log entries pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" tabindex="-1">Previous</a>
+                                </li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Raw View -->
+            <div id="rawView" class="log-view" style="display: none;">
+                <div class="card log-card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Raw Log Output</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <select class="form-select" id="logFileSelect">
+                                <option value="application.log" selected>application.log</option>
+                                <option value="error.log">error.log</option>
+                                <option value="access.log">access.log</option>
+                                <option value="security.log">security.log</option>
+                            </select>
+                        </div>
+                        <div class="bg-dark text-light p-3 rounded" style="max-height: 600px; overflow: auto; font-family: monospace; font-size: 0.9rem;">
+                            <pre id="rawLogContent" th:text="${rawLogContent}">2025-02-25 12:30:45.123 INFO  [UserController] User with ID 123 logged in successfully.
+2025-02-25 12:35:12.456 DEBUG [SessionService] Session 456 created for user 123.
+2025-02-25 12:40:22.789 INFO  [TutorService] Tutor profile 789 updated successfully.
+2025-02-25 12:42:15.321 WARN  [PaymentService] Payment verification taking longer than expected for transaction ID TX12345.
+2025-02-25 12:45:33.654 ERROR [DatabaseService] Failed to connect to database: Connection timeout after 30 seconds.</pre>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted small">Showing last 500 lines</span>
+                            <div>
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-download"></i> Download
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary ms-2">
+                                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Export Logs Modal -->
+        <div class="modal fade" id="exportLogsModal" tabindex="-1" aria-labelledby="exportLogsModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exportLogsModalLabel">Export System Logs</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="mb-3">
+                                <label for="exportFormat" class="form-label">Export Format</label>
+                                <select class="form-select" id="exportFormat" name="format">
+                                    <option value="txt">Text File</option>
+                                    <option value="csv">CSV</option>
+                                    <option value="json">JSON</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="exportLogLevel" class="form-label">Log Level</label>
+                                <select class="form-select" id="exportLogLevel" name="level">
+                                    <option value="all" selected>All Levels</option>
+                                    <option value="info">Info and above</option>
+                                    <option value="warning">Warning and above</option>
+                                    <option value="error">Error only</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="exportDateRange" class="form-label">Date Range</label>
+                                <select class="form-select" id="exportDateRange" name="dateRange">
+                                    <option value="today">Today</option>
+                                    <option value="last7days" selected>Last 7 Days</option>
+                                    <option value="last30days">Last 30 Days</option>
+                                    <option value="custom">Custom Range</option>
+                                </select>
+                            </div>
+                            <div class="row mb-3" id="exportCustomDateRange" style="display: none;">
+                                <div class="col-md-6">
+                                    <label for="exportStartDate" class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="exportStartDate" name="startDate">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="exportEndDate" class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="exportEndDate" name="endDate">
+                                </div>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="includeSystemInfo">
+                                <label class="form-check-label" for="includeSystemInfo">Include System Information</label>
+                                <div class="form-text">Include details about server, environment, and application version.</div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary">Export</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Clear Logs Modal -->
+        <div class="modal fade" id="clearLogsModal" tabindex="-1" aria-labelledby="clearLogsModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="clearLogsModalLabel">Clear System Logs</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-danger mb-4">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <strong>Warning:</strong> This action cannot be undone. All selected log entries will be permanently removed.
+                        </div>
+                        <form>
+                            <div class="mb-3">
+                                <label for="clearLogLevel" class="form-label">Select Log Levels to Clear</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="clearInfoLogs" checked>
+                                    <label class="form-check-label" for="clearInfoLogs">Info</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="clearWarningLogs" checked>
+                                    <label class="form-check-label" for="clearWarningLogs">Warning</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="clearErrorLogs">
+                                    <label class="form-check-label" for="clearErrorLogs">Error</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="clearDebugLogs" checked>
+                                    <label class="form-check-label" for="clearDebugLogs">Debug</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="clearOlderThan" class="form-label">Clear Logs Older Than</label>
+                                <select class="form-select" id="clearOlderThan">
+                                    <option value="1">1 day</option>
+                                    <option value="7" selected>1 week</option>
+                                    <option value="30">1 month</option>
+                                    <option value="90">3 months</option>
+                                    <option value="all">All logs</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="backupBeforeClear" checked>
+                                    <label class="form-check-label" for="backupBeforeClear">Backup logs before clearing</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="confirmClear" class="form-label">Type "CLEAR" to confirm</label>
+                                <input type="text" class="form-control" id="confirmClear" placeholder="CLEAR">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" disabled id="confirmClearBtn">Clear Logs</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script layout:fragment="script">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Toggle between list and raw view
+            const viewList = document.getElementById('viewList');
+            const viewRaw = document.getElementById('viewRaw');
+            const listView = document.getElementById('listView');
+            const rawView = document.getElementById('rawView');
+            
+            viewList.addEventListener('change', function() {
+                listView.style.display = 'block';
+                rawView.style.display = 'none';
+            });
+            
+            viewRaw.addEventListener('change', function() {
+                listView.style.display = 'none';
+                rawView.style.display = 'block';
+            });
+            
+            // Expandable log entries
+            document.querySelectorAll('.log-expand-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const logEntry = this.closest('.log-entry-expandable');
+                    logEntry.classList.toggle('expanded');
+                    this.innerHTML = logEntry.classList.contains('expanded') 
+                        ? 'Show less <i class="bi bi-chevron-up"></i>' 
+                        : 'Show more <i class="bi bi-chevron-down"></i>';
+                });
+            });
+            
+            // Export logs - date range toggle
+            document.getElementById('exportDateRange').addEventListener('change', function() {
+                document.getElementById('exportCustomDateRange').style.display = 
+                    this.value === 'custom' ? 'flex' : 'none';
+            });
+            
+            // Clear logs confirmation
+            document.getElementById('confirmClear').addEventListener('input', function() {
+                document.getElementById('confirmClearBtn').disabled = this.value !== 'CLEAR';
+            });
+            
+            // Refresh logs button
+            document.getElementById('refreshLogsBtn').addEventListener('click', function() {
+                // This would typically make an AJAX call to refresh the logs
+                // without reloading the page, but for simplicity, we'll just reload
+                window.location.reload();
+            });
+        });
+    </script>
+</body>
+</html>

@@ -29,8 +29,8 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-@PreAuthorize("hasAnyRole('ADMIN', 'TUTOR', 'STUDENT')")
 public class TutorServiceImpl implements TutorService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(TutorServiceImpl.class);
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
@@ -191,11 +191,27 @@ public class TutorServiceImpl implements TutorService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('ADMIN', 'TUTOR', 'STUDENT')")
     public TutorDTO getTutorById(Integer id) {
-        Tutor tutor = tutorRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tutor not found"));
-        return convertToTutorDTO(tutor);
+        log.info("Getting tutor by ID: {}", id);
+        try {
+            Optional<Tutor> tutorOpt = tutorRepository.findByIdWithUser(id);
+            if (!tutorOpt.isPresent()) {
+                log.error("No tutor found with ID: {}", id);
+                throw new RuntimeException("Tutor not found");
+            }
+            
+            Tutor tutor = tutorOpt.get();
+            if (tutor.getUser() == null) {
+                log.error("Tutor {} has no associated user", id);
+                throw new RuntimeException("Tutor has no associated user");
+            }
+            
+            log.info("Found tutor: {} with user: {}", id, tutor.getUser().getEmail());
+            return convertToTutorDTO(tutor);
+        } catch (Exception e) {
+            log.error("Error getting tutor {}: {}", id, e.getMessage());
+            throw new RuntimeException("Error getting tutor: " + e.getMessage());
+        }
     }
 
     @Override
@@ -227,24 +243,79 @@ public class TutorServiceImpl implements TutorService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
+    @Transactional(readOnly = true)
     public List<TutorDTO> getAllTutors() {
-        return tutorRepository.findAll().stream()
-                .map(this::convertToTutorDTO)
-                .collect(Collectors.toList());
+        try {
+            System.out.println("Fetching all tutors from database...");
+            List<Tutor> tutors = tutorRepository.findAll();
+            System.out.println("Found " + tutors.size() + " tutors");
+
+            List<TutorDTO> dtos = tutors.stream()
+                    .map(tutor -> {
+                        try {
+                            return convertToTutorDTO(tutor);
+                        } catch (Exception e) {
+                            System.err.println("Error converting tutor to DTO: " + e.getMessage());
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
+                    .filter(dto -> dto != null)
+                    .collect(Collectors.toList());
+
+            System.out.println("Converted " + dtos.size() + " tutors to DTOs");
+            return dtos;
+        } catch (Exception e) {
+            System.err.println("Error in getAllTutors: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
-    @PreAuthorize("permitAll")
+    @Override
     public List<TutorDTO> searchTutors(String keyword, Integer subjectId,
                                         BigDecimal minRating, BigDecimal maxRate, String sortBy) {
-        if (sortBy != null && !List.of("RATING", "PRICE_LOW", "PRICE_HIGH").contains(sortBy)) {
-            throw new IllegalArgumentException("Invalid sort criteria");
-        }
+        try {
+            log.info("Searching tutors with params - keyword: {}, subjectId: {}, minRating: {}, maxRate: {}, sortBy: {}",
+                    keyword, subjectId, minRating, maxRate, sortBy);
 
-        return tutorRepository.searchTutors(keyword, subjectId, minRating, maxRate, sortBy)
-                .stream()
-                .map(this::convertToTutorDTO)
-                .collect(Collectors.toList());
+            // First get the IDs of matching tutors
+            List<Integer> tutorIds = tutorRepository.findSearchTutorIds(keyword, subjectId, minRating, maxRate);
+            log.info("Found {} matching tutor IDs", tutorIds.size());
+
+            if (tutorIds.isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            // Then fetch complete tutor data with all necessary relationships
+            List<Tutor> tutors = tutorRepository.findTutorsWithDetails(tutorIds);
+            log.info("Loaded {} tutors with full details", tutors.size());
+
+            // Convert to DTOs
+            List<TutorDTO> dtos = tutors.stream()
+                    .map(this::convertToTutorDTO)
+                    .collect(Collectors.toList());
+
+            // Sort results if needed
+            if (sortBy != null) {
+                switch (sortBy) {
+                    case "RATING":
+                        dtos.sort((a, b) -> b.getRating().compareTo(a.getRating()));
+                        break;
+                    case "PRICE_LOW":
+                        dtos.sort(Comparator.comparing(TutorDTO::getHourlyRate));
+                        break;
+                    case "PRICE_HIGH":
+                        dtos.sort((a, b) -> b.getHourlyRate().compareTo(a.getHourlyRate()));
+                        break;
+                }
+            }
+
+            return dtos;
+        } catch (Exception e) {
+            log.error("Error searching tutors: ", e);
+            throw e;
+        }
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
@@ -257,7 +328,6 @@ public class TutorServiceImpl implements TutorService {
 
     @Override
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyRole('ADMIN', 'TUTOR', 'STUDENT')")
     public List<TutorSubjectDTO> getTutorSubjects(Integer tutorId) {
         try {
             System.out.println("Getting subjects for tutor: " + tutorId);
@@ -276,7 +346,9 @@ public class TutorServiceImpl implements TutorService {
             
             System.out.println("Found " + subjects.size() + " subjects");
             
-            List<TutorSubjectDTO> dtos = new ArrayList<>();
+            // Use a Map to keep track of subjects by name, keeping the one with highest experience
+            Map<String, TutorSubjectDTO> uniqueSubjects = new HashMap<>();
+            
             for (TutorSubject subject : subjects) {
                 try {
                     // Verify subject data is complete
@@ -285,28 +357,39 @@ public class TutorServiceImpl implements TutorService {
                         continue;
                     }
                     
-                    TutorSubjectDTO dto = new TutorSubjectDTO();
-                    dto.setId(subject.getId());
-                    dto.setTutorId(tutorId);
-                    dto.setSubjectId(subject.getSubject().getId());
-                    dto.setSubjectName(subject.getSubject().getName());
-                    dto.setHourlyRate(subject.getHourlyRate());
-                    dto.setExperienceYears(subject.getExperienceYears());
-                    dto.setDescription(subject.getDescription());
-                    dto.setActive(subject.isActive());
+                    String subjectName = subject.getSubject().getName();
+                    TutorSubjectDTO existingDto = uniqueSubjects.get(subjectName);
                     
-                    System.out.println("Converting subject: " + dto.getSubjectName() +
-                                     " (ID: " + dto.getId() + ")" +
-                                     ", Rate: " + dto.getHourlyRate() +
-                                     ", Active: " + dto.isActive());
-                    
-                    dtos.add(dto);
+                    // If this subject doesn't exist yet, or has more experience than the existing one
+                    if (existingDto == null ||
+                        (subject.getExperienceYears() != null &&
+                         (existingDto.getExperienceYears() == null ||
+                          subject.getExperienceYears() > existingDto.getExperienceYears()))) {
+                        
+                        TutorSubjectDTO dto = new TutorSubjectDTO();
+                        dto.setId(subject.getId());
+                        dto.setTutorId(tutorId);
+                        dto.setSubjectId(subject.getSubject().getId());
+                        dto.setSubjectName(subjectName);
+                        dto.setHourlyRate(subject.getHourlyRate());
+                        dto.setExperienceYears(subject.getExperienceYears());
+                        dto.setDescription(subject.getDescription());
+                        dto.setActive(subject.isActive());
+                        
+                        System.out.println("Converting subject: " + dto.getSubjectName() +
+                                         " (ID: " + dto.getId() + ")" +
+                                         ", Rate: " + dto.getHourlyRate() +
+                                         ", Active: " + dto.isActive());
+                        
+                        uniqueSubjects.put(subjectName, dto);
+                    }
                 } catch (Exception e) {
                     System.err.println("Error converting subject to DTO: " + e.getMessage());
                 }
             }
             
-            System.out.println("Returning " + dtos.size() + " DTOs");
+            List<TutorSubjectDTO> dtos = new ArrayList<>(uniqueSubjects.values());
+            System.out.println("Returning " + dtos.size() + " unique DTOs");
             return dtos;
         } catch (Exception e) {
             System.err.println("Error in getTutorSubjects: " + e.getMessage());
@@ -451,53 +534,95 @@ public class TutorServiceImpl implements TutorService {
         tutorRepository.save(tutor);
     }
 
-    @Override
-    @PreAuthorize("hasAnyRole('ADMIN', 'TUTOR')")
-    public TutorDTO updateTutorProfile(Integer tutorId, TutorProfileUpdateDTO updateDTO) {
-        validateTutorAccess(tutorId);
-        Tutor tutor = tutorRepository.findById(tutorId)
-                .orElseThrow(() -> new RuntimeException("Tutor not found"));
-        
-        User user = tutor.getUser();
-        // Update user info
-        if (updateDTO.getFullName() != null) {
-            user.setFullName(updateDTO.getFullName());
-        }
-        if (updateDTO.getPhoneNumber() != null) {
-            user.setPhoneNumber(updateDTO.getPhoneNumber());
-        }
-
-        // Update tutor info
+    private void updateTutorFromDTO(Tutor tutor, TutorProfileUpdateDTO updateDTO) {
         if (updateDTO.getBio() != null) {
-            tutor.setBio(updateDTO.getBio());
+            tutor.setBio(updateDTO.getBio().trim());
         }
         if (updateDTO.getQualifications() != null) {
-            tutor.setQualifications(updateDTO.getQualifications());
+            tutor.setQualifications(updateDTO.getQualifications().trim());
         }
         if (updateDTO.getSubjectsTaught() != null) {
-            tutor.setSubjectsTaught(updateDTO.getSubjectsTaught());
+            tutor.setSubjectsTaught(updateDTO.getSubjectsTaught().trim());
         }
         if (updateDTO.getHourlyRate() != null) {
             tutor.setHourlyRate(updateDTO.getHourlyRate());
         }
 
-        if (updateDTO.getSubjectRates() != null) {
-            updateDTO.getSubjectRates().forEach((subjectId, rate) -> {
-                TutorSubject tutorSubject = tutorSubjectRepository
-                    .findByTutorIdAndSubjectId(tutorId, subjectId)
-                    .orElseGet(() -> {
-                        TutorSubject newTS = new TutorSubject();
-                        newTS.setTutor(tutor);
-                        newTS.setSubject(subjectRepository.getReferenceById(subjectId));
-                        return newTS;
-                    });
-                tutorSubject.setHourlyRate(rate);
-                tutorSubjectRepository.save(tutorSubject);
-            });
+        // Update the user data
+        User user = tutor.getUser();
+        String originalPictureUrl = user.getProfilePictureUrl();
+        log.info("Current profile picture URL: {}", originalPictureUrl);
+        
+        if (updateDTO.getFullName() != null && !updateDTO.getFullName().trim().isEmpty()) {
+            user.setFullName(updateDTO.getFullName().trim());
+        }
+        if (updateDTO.getPhoneNumber() != null) {
+            user.setPhoneNumber(updateDTO.getPhoneNumber().trim());
+        }
+
+        // Always preserve the existing profile picture URL unless explicitly changed
+        if (originalPictureUrl != null) {
+            log.info("Preserving original profile picture URL: {}", originalPictureUrl);
+            user.setProfilePictureUrl(originalPictureUrl);
+        } else {
+            // If no URL, try to get it from fresh user data
+            User freshUser = userRepository.findById(user.getId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            if (freshUser.getProfilePictureUrl() != null) {
+                log.info("Retrieved profile picture URL from database: {}", freshUser.getProfilePictureUrl());
+                user.setProfilePictureUrl(freshUser.getProfilePictureUrl());
+            }
+        }
+    }
+    
+    @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'TUTOR')")
+    @Transactional(rollbackFor = Exception.class)
+    public TutorDTO updateTutorProfile(Integer tutorId, TutorProfileUpdateDTO updateDTO) {
+        validateTutorAccess(tutorId);
+        
+        // Load tutor with user data in one query
+        Tutor tutor = tutorRepository.findByIdWithUser(tutorId)
+                .orElseThrow(() -> new RuntimeException("Tutor not found"));
+                
+        // Update both tutor and user data
+        updateTutorFromDTO(tutor, updateDTO);
+        
+        // Handle profile picture if provided
+        if (updateDTO.getProfilePicture() != null && !updateDTO.getProfilePicture().isEmpty()) {
+            String pictureUrl = uploadProfilePicture(tutorId, updateDTO.getProfilePicture());
+            tutor.getUser().setProfilePictureUrl(pictureUrl);
         }
         
-        Tutor savedTutor = tutorRepository.save(tutor);
+        // Save tutor and user
+        final Tutor savedTutor = tutorRepository.save(tutor);
+        User savedUser = userRepository.save(tutor.getUser());
+        
+        log.info("Saved user profile picture URL: {}", savedUser.getProfilePictureUrl());
+
+        // Handle subject rates if provided in a separate transaction
+        if (updateDTO.getSubjectRates() != null && !updateDTO.getSubjectRates().isEmpty()) {
+            updateSubjectRates(savedTutor.getId(), updateDTO.getSubjectRates());
+        }
+        
         return convertToTutorDTO(savedTutor);
+    }
+
+    private void updateSubjectRates(Integer tutorId, Map<Integer, Double> subjectRates) {
+        subjectRates.forEach((subjectId, rate) -> {
+            TutorSubject tutorSubject = tutorSubjectRepository
+                    .findByTutorIdAndSubjectId(tutorId, subjectId)
+                    .orElseGet(() -> {
+                        Tutor tutor = tutorRepository.getReferenceById(tutorId);
+                        Subject subject = subjectRepository.getReferenceById(subjectId);
+                        TutorSubject newTS = new TutorSubject();
+                        newTS.setTutor(tutor);
+                        newTS.setSubject(subject);
+                        return newTS;
+                    });
+            tutorSubject.setHourlyRate(rate);
+            tutorSubjectRepository.save(tutorSubject);
+        });
     }
 
     @Override
@@ -608,7 +733,6 @@ public class TutorServiceImpl implements TutorService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('ADMIN', 'TUTOR', 'STUDENT')")
     public List<ReviewDTO> getTutorReviews(Integer tutorId) {
         return reviewRepository.findByTutorId(tutorId).stream()
                 .sorted((r1, r2) -> r2.getCreatedAt().compareTo(r1.getCreatedAt()))
@@ -617,7 +741,6 @@ public class TutorServiceImpl implements TutorService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('ADMIN', 'TUTOR', 'STUDENT')")
     public List<ReviewDTO> getRecentTutorReviews(Integer tutorId, int limit) {
         return reviewRepository.findRecentReviewsByTutorId(tutorId, limit).stream()
                 .map(this::convertToReviewDTO)
@@ -625,7 +748,6 @@ public class TutorServiceImpl implements TutorService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('ADMIN', 'TUTOR', 'STUDENT')")
     public Double getAverageRating(Integer tutorId) {
         return reviewRepository.getAverageRatingByTutorId(tutorId);
     }
@@ -707,17 +829,78 @@ public class TutorServiceImpl implements TutorService {
 
     // Helper methods for DTO conversion
     private TutorDTO convertToTutorDTO(Tutor tutor) {
-        TutorDTO dto = new TutorDTO();
-        User user = tutor.getUser();
-        dto.setId(tutor.getId());
-        dto.setUser(convertToUserDTO(user));
-        dto.setQualifications(tutor.getQualifications());
-        dto.setSubjectsTaught(tutor.getSubjectsTaught());
-        dto.setHourlyRate(tutor.getHourlyRate());
-        dto.setIsVerified(user.getIsActive());
-        dto.setBio(tutor.getBio());
-        dto.setRating(calculateAverageRating(tutor.getId()));
-        return dto;
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            boolean isAuthorized = auth != null &&
+                (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")) ||
+                 (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_TUTOR")) &&
+                  tutor.getUser().getEmail().equals(auth.getName())));
+
+            TutorDTO dto = new TutorDTO();
+            dto.setId(tutor.getId());
+
+            // Handle user data
+            User user = tutor.getUser();
+            if (user != null) {
+                dto.setUser(convertToUserDTO(user));
+                dto.setIsVerified(user.getIsActive());
+            } else {
+                log.warn("Tutor {} has no associated user", tutor.getId());
+                UserDTO defaultUser = new UserDTO();
+                defaultUser.setFullName("Unknown User");
+                defaultUser.setActive(false);
+                dto.setUser(defaultUser);
+                dto.setIsVerified(false);
+            }
+
+            // Set basic tutor info with null checks
+            dto.setQualifications(tutor.getQualifications() != null ? tutor.getQualifications() : "");
+            dto.setBio(tutor.getBio() != null ? tutor.getBio() : "");
+            dto.setHourlyRate(tutor.getHourlyRate() != null ? tutor.getHourlyRate() : 0.0);
+            
+            try {
+                // Get active subjects using optimized query
+                List<TutorSubject> activeSubjects = tutorSubjectRepository.findActiveByTutorId(tutor.getId())
+                        .stream()
+                        .filter(ts -> ts.getSubject() != null && ts.getSubject().isActive())
+                        .collect(Collectors.toList());
+                
+                // Create comma-separated list of subject names
+                String subjectsTaught = activeSubjects.stream()
+                        .map(ts -> ts.getSubject().getName())
+                        .collect(Collectors.joining(", "));
+                
+                dto.setSubjectsTaught(subjectsTaught.isEmpty() ? "No subjects listed" : subjectsTaught);
+            } catch (Exception e) {
+                log.error("Error getting subjects for tutor {}: {}", tutor.getId(), e.getMessage());
+                dto.setSubjectsTaught("No subjects available");
+            }
+
+            try {
+                Double rating = calculateAverageRating(tutor.getId());
+                dto.setRating(rating != null ? rating : 0.0);
+            } catch (Exception e) {
+                log.error("Error calculating rating for tutor {}: {}", tutor.getId(), e.getMessage());
+                dto.setRating(0.0);
+            }
+            
+            // Only include sensitive data for authorized users
+            if (isAuthorized) {
+                try {
+                    dto.setTotalSessions(getTotalSessionCount(tutor.getId()).intValue());
+                } catch (Exception e) {
+                    log.error("Error getting session count for tutor {}: {}", tutor.getId(), e.getMessage());
+                    dto.setTotalSessions(0);
+                }
+            } else {
+                dto.setTotalSessions(0);
+            }
+
+            return dto;
+        } catch (Exception e) {
+            log.error("Error converting tutor to DTO: {}", e.getMessage());
+            throw new RuntimeException("Failed to convert tutor to DTO", e);
+        }
     }
 
     private TutorAvailabilityDTO convertToAvailabilityDTO(TutorAvailability availability) {
@@ -737,6 +920,7 @@ public class TutorServiceImpl implements TutorService {
         dto.setEmail(user.getEmail());
         dto.setFullName(user.getFullName());
         dto.setPhoneNumber(user.getPhoneNumber());
+        System.out.println("Converting user to DTO - Profile picture URL: " + user.getProfilePictureUrl());
         dto.setProfilePictureUrl(user.getProfilePictureUrl());
         dto.setActive(user.getIsActive());
         return dto;
@@ -782,29 +966,70 @@ public class TutorServiceImpl implements TutorService {
     public String uploadProfilePicture(Integer tutorId, MultipartFile file) {
         validateTutorAccess(tutorId);
         try {
+            System.out.println("Starting profile picture upload for tutor: " + tutorId);
+            
+            // Setup upload directory
             String uploadDir = "src/main/resources/static/images/profiles";
-            Path uploadPath = Paths.get(uploadDir);
+            Path uploadPath = Paths.get(uploadDir).toAbsolutePath();
+            System.out.println("Upload path: " + uploadPath);
             
             if (!Files.exists(uploadPath)) {
+                System.out.println("Creating upload directory");
                 Files.createDirectories(uploadPath);
             }
 
-            // Generate a unique filename
-            String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
-            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            String filename = UUID.randomUUID().toString() + fileExtension;
-            
-            // Save the file
-            Path filePath = uploadPath.resolve(filename);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            
-            // Update the user's profile picture URL
+            // Get tutor and user info
             Tutor tutor = tutorRepository.findById(tutorId)
                     .orElseThrow(() -> new RuntimeException("Tutor not found"));
             User user = tutor.getUser();
+            System.out.println("Found tutor: " + user.getFullName());
+
+            // Keep track of old profile picture path but don't delete it yet
+            String oldPicture = user.getProfilePictureUrl();
+            Path oldFilePath = null;
+            if (oldPicture != null && !oldPicture.isEmpty()) {
+                String oldFileName = oldPicture.substring(oldPicture.lastIndexOf("/") + 1);
+                oldFilePath = uploadPath.resolve(oldFileName);
+                System.out.println("Found old profile picture: " + oldFilePath);
+            }
+
+            // Validate and save new picture
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                throw new RuntimeException("Only image files are allowed");
+            }
+
+            String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
+            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String filename = UUID.randomUUID().toString() + fileExtension;
+            Path filePath = uploadPath.resolve(filename);
+            
+            System.out.println("Saving new profile picture: " + filePath);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("New file saved successfully");
+
+            // Only delete old file after new one is successfully saved
+            if (oldFilePath != null && Files.exists(oldFilePath)) {
+                try {
+                    Files.delete(oldFilePath);
+                    System.out.println("Old profile picture deleted successfully: " + oldFilePath);
+                } catch (Exception e) {
+                    System.err.println("Warning: Failed to delete old profile picture: " + e.getMessage());
+                    // Continue execution since new file was saved successfully
+                }
+            }
+            
+            // Update database with new profile picture URL
             String profilePictureUrl = "/images/profiles/" + filename;
+            System.out.println("Updating database with new profile picture URL: " + profilePictureUrl);
+            
+            // Update in a new transaction to ensure changes are visible immediately
+            // Update the user in a single operation
             user.setProfilePictureUrl(profilePictureUrl);
             userRepository.save(user);
+            
+            log.info("Updated user profile picture URL: {}", profilePictureUrl);
+            log.info("Profile picture update completed successfully");
             
             return profilePictureUrl;
         } catch (IOException ex) {

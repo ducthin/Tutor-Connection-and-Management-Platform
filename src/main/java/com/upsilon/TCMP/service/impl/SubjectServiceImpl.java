@@ -72,6 +72,7 @@ public class SubjectServiceImpl implements SubjectService {
     @Override
     public List<SubjectDTO> getAllSubjects() {
         return subjectRepository.findAll().stream()
+                .filter(Subject::isActive)  // Only return active subjects
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -179,13 +180,14 @@ public class SubjectServiceImpl implements SubjectService {
     public void reorderCategories(List<String> orderedCategories) {
         // Optional: Implement if category ordering is needed
     }
+@Override
+public boolean isSubjectActive(Integer subjectId) {
+    return subjectRepository.findById(subjectId)
+            .map(Subject::isActive)
+            .orElse(false);
+}
 
-    @Override
-    public boolean isSubjectActive(Integer subjectId) {
-        return subjectRepository.existsById(subjectId);
-    }
-
-    @Override
+@Override
     public boolean hasActiveTutors(Integer subjectId) {
         return subjectRepository.countVerifiedTutorsBySubject(subjectId) > 0;
     }

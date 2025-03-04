@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Available Subjects</title>
+    <style>
+        .subject-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-radius: 15px;
+            overflow: hidden;
+            height: 100%;
+        }
+        .subject-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .subject-header {
+            background: linear-gradient(45deg, #4e73df, #6f42c1);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container py-4">
+            <h1 class="mb-4">Available Subjects</h1>
+            
+            <div class="row g-4">
+                <!-- No Subjects Message -->
+                <div th:if="${subjects.empty}" class="col-12">
+                    <div class="text-center py-5">
+                        <i class="bi bi-book display-1 text-muted"></i>
+                        <h3 class="mt-4">No subjects available</h3>
+                        <p class="text-muted">Please check back later</p>
+                    </div>
+                </div>
+                
+                <!-- Subject Cards -->
+                <div th:each="subject : ${subjects}" class="col-md-6 col-lg-4">
+                    <div class="card subject-card shadow-sm">
+                        <!-- Subject Header -->
+                        <div class="subject-header">
+                            <h4 th:text="${subject.name}">Subject Name</h4>
+                        </div>
+                        
+                        <!-- Subject Body -->
+                        <div class="card-body">
+                            <!-- Description -->
+                            <p class="card-text" th:if="${subject.description}" th:text="${subject.description}">
+                                Subject description
+                            </p>
+                            <p class="card-text" th:unless="${subject.description}">
+                                No description available for this subject.
+                            </p>
+                            
+                            <!-- Actions -->
+                            <div class="text-center mt-3">
+                                <a th:href="@{/tutors/search(subjectId=${subject.id})}" 
+                                   class="btn btn-outline-primary">
+                                    <i class="bi bi-search me-2"></i>Find Tutors
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

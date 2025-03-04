@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/base}">
+      layout:decorate="layout/base">
 <head>
     <title>Find a Tutor</title>
+    <!-- Debug comment to verify template loading -->
+    <th:block layout:fragment="debug" th:remove="tag">
+        <!-- Template: tutor/index.html -->
+        <!-- Layout: layout/base.html -->
+    </th:block>
     <style>
         .search-hero {
             background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);

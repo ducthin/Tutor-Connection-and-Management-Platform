@@ -4,98 +4,208 @@
       layout:decorate="~{layout/base}">
 <head>
     <title>Search Results</title>
+    <style>
+        .filter-section {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .tutor-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .tutor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .tutor-header {
+            background: linear-gradient(45deg, #4e73df, #6f42c1);
+            color: white;
+            padding: 20px;
+        }
+        .rating-badge {
+            background-color: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        .subject-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .subject-tag {
+            background-color: #e7f1ff;
+            color: #0d6efd;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+        }
+        .stat-box {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 5px 0;
+        }
+        .filter-input {
+            border-radius: 20px;
+            border: 1px solid #dee2e6;
+            padding: 8px 15px;
+        }
+        .search-btn {
+            border-radius: 20px;
+            padding: 8px 25px;
+            font-weight: 500;
+        }
+    </style>
 </head>
 <body>
     <div layout:fragment="content">
         <div class="container py-4">
             <!-- Search Filters -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <form th:action="@{/tutors/results}" method="get" class="row g-3">
-                        <div class="col-md-3">
-                            <input type="text" class="form-control" name="keyword" th:value="${keyword}"
+            <div class="filter-section shadow-sm">
+                <form th:action="@{/tutors/results}" method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" class="form-control filter-input border-start-0" 
+                                   name="keyword" th:value="${keyword}"
                                    placeholder="Search by name or subject">
                         </div>
-                        <div class="col-md-3">
-                            <select class="form-select" name="subjectId">
-                                <option value="">All Subjects</option>
-                                <option th:each="subject : ${subjects}"
-                                        th:value="${subject.id}"
-                                        th:text="${subject.name}"
-                                        th:selected="${subject.id == subjectId}">Subject</option>
-                            </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select filter-input" name="subjectId">
+                            <option value="">All Subjects</option>
+                            <option th:each="subject : ${subjects}"
+                                    th:value="${subject.id}"
+                                    th:text="${subject.name}"
+                                    th:selected="${subject.id == subjectId}">Subject</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select filter-input" name="sortBy">
+                            <option value="RATING">Rating ↓</option>
+                            <option value="PRICE_LOW">Price ↑</option>
+                            <option value="PRICE_HIGH">Price ↓</option>
+                            <option value="EXPERIENCE">Experience ↓</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent">$</span>
+                            <input type="number" class="form-control filter-input" 
+                                   name="maxRate" step="0.01"
+                                   placeholder="Max Rate/hr">
                         </div>
-                        <div class="col-md-2">
-                            <select class="form-select" name="sortBy">
-                                <option value="RATING">Rating (High to Low)</option>
-                                <option value="PRICE_LOW">Price (Low to High)</option>
-                                <option value="PRICE_HIGH">Price (High to Low)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <input type="number" class="form-control" name="maxRate" step="0.01"
-                                   placeholder="Max Rate ($)">
-                        </div>
-                        <div class="col-md-2">
-                            <button type="submit" class="btn btn-primary w-100">Search</button>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-primary search-btn w-100">
+                            <i class="bi bi-funnel-fill"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Error Message -->
+            <div th:if="${error}" class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span th:text="${error}">Error message</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
 
             <!-- Search Results -->
             <div class="row g-4">
-                <div th:if="${tutors.empty}" class="col-12 text-center">
-                    <div class="alert alert-info">
-                        No tutors found matching your criteria.
-                        <a th:href="@{/tutors/search}" class="alert-link">Try different search options</a>
+                <!-- No Results Message -->
+                <div th:if="${tutors.empty}" class="col-12">
+                    <div class="text-center py-5">
+                        <i class="bi bi-search display-1 text-muted"></i>
+                        <h3 class="mt-4">No tutors found</h3>
+                        <p class="text-muted">Try adjusting your search criteria or 
+                            <a th:href="@{/tutors/search}" class="text-primary">browse all tutors</a>
+                        </p>
                     </div>
                 </div>
                 
+                <!-- Tutor Cards -->
                 <div th:each="tutor : ${tutors}" class="col-md-6 col-lg-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-3">
+                    <div class="card tutor-card shadow-sm h-100">
+                        <!-- Tutor Header -->
+                        <div class="tutor-header">
+                            <div class="d-flex align-items-center">
                                 <img th:if="${tutor.user.profilePictureUrl}"
                                      th:src="${tutor.user.profilePictureUrl}"
-                                     class="rounded-circle me-3"
-                                     style="width: 60px; height: 60px; object-fit: cover;"
+                                     class="rounded-circle"
+                                     style="width: 70px; height: 70px; object-fit: cover; border: 3px solid white;"
                                      alt="Profile Picture">
                                 <img th:unless="${tutor.user.profilePictureUrl}"
                                      src="/images/default-profile.png"
-                                     class="rounded-circle me-3"
-                                     style="width: 60px; height: 60px; object-fit: cover;"
+                                     class="rounded-circle"
+                                     style="width: 70px; height: 70px; object-fit: cover; border: 3px solid white;"
                                      alt="Default Profile Picture">
-                                <div>
-                                    <h5 class="card-title mb-0" th:text="${tutor.user.fullName}">Tutor Name</h5>
-                                    <div class="text-warning">
-                                        <i class="bi bi-star-fill"></i>
+                                <div class="ms-3">
+                                    <h5 class="mb-1" th:text="${tutor.user.fullName}">Tutor Name</h5>
+                                    <div class="rating-badge">
+                                        <i class="bi bi-star-fill text-warning"></i>
                                         <span th:text="${#numbers.formatDecimal(tutor.rating, 1, 1)}">4.5</span>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <p class="card-text" th:text="${tutor.bio}">Bio</p>
+                        <!-- Tutor Body -->
+                        <div class="card-body">
+                            <!-- Bio -->
+                            <p class="card-text text-muted" 
+                               th:text="${#strings.length(tutor.bio) > 150} ? ${#strings.substring(tutor.bio,0,150) + '...'} : ${tutor.bio}">
+                                Bio
+                            </p>
 
-                            <div class="mb-3">
-                                <strong>Subjects:</strong>
-                                <p class="mb-0" th:text="${tutor.subjectsTaught}">Subjects</p>
+                            <!-- Subject Tags -->
+                            <div class="subject-tags mb-3">
+                                <span th:each="subject : ${#strings.listSplit(tutor.subjectsTaught, ',')}" 
+                                      class="subject-tag" th:text="${#strings.trim(subject)}">
+                                    Subject
+                                </span>
                             </div>
 
+                            <!-- Stats -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="stat-box">
+                                        <div class="text-primary fw-bold" th:text="${'$' + tutor.hourlyRate + '/hr'}">
+                                            $50/hr
+                                        </div>
+                                        <small class="text-muted">Rate</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="stat-box">
+                                        <div class="text-primary fw-bold" th:text="${tutor.totalSessions ?: 0}">
+                                            0
+                                        </div>
+                                        <small class="text-muted">Sessions</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
                             <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong class="text-primary" th:text="${'$' + tutor.hourlyRate + '/hr'}">$50/hr</strong>
-                                </div>
-                                <div class="btn-group">
-                                    <a th:href="@{/tutors/profile/{id}(id=${tutor.id})}"
-                                       class="btn btn-outline-primary">View Profile</a>
-                                    <form th:action="@{/tutors/favorites/{id}(id=${tutor.id})}"
-                                          method="post" style="display: inline;">
-                                        <button type="submit" class="btn btn-outline-success">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </form>
-                                </div>
+                                <a th:href="@{/tutors/profile/{id}(id=${tutor.id})}"
+                                   class="btn btn-outline-primary rounded-pill px-4">
+                                    View Profile
+                                </a>
+                                <form th:action="@{/tutors/favorites/{id}(id=${tutor.id})}"
+                                      method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-danger rounded-circle">
+                                        <i class="bi bi-heart"></i>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
