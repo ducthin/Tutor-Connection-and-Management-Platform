@@ -3,6 +3,7 @@ package com.upsilon.TCMP.controller;
 import com.upsilon.TCMP.dto.*;
 import com.upsilon.TCMP.service.SessionService;
 import com.upsilon.TCMP.service.StudentService;
+import com.upsilon.TCMP.service.SubjectService;
 import com.upsilon.TCMP.service.TutorService;
 import com.upsilon.TCMP.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,9 @@ public class SessionBookingController {
 
     @Autowired
     private TutorService tutorService;
+
+    @Autowired
+    private SubjectService subjectService;
 
     @Autowired
     private StudentService studentService;
@@ -217,11 +221,21 @@ public class SessionBookingController {
             debugInfo.append("- Notes: ").append(notes != null ? notes : "").append("\n");
 
             try {
-                // Create the session
+                // Create session
+                debugInfo.append("\nBắt đầu tạo phiên...\n");
                 SessionDTO sessionDTO = sessionService.createSession(createDTO);
-                
-                redirectAttributes.addFlashAttribute("success", "Buổi học đã được đặt thành công! Vui lòng đợi gia sư xác nhận.");
-                return "redirect:/tutors/profile/" + tutorId;
+                debugInfo.append("Đã tạo phiên thành công với ID: ").append(sessionDTO.getId()).append("\n");
+
+                // Lấy thông tin chi tiết về buổi học đã đặt
+                TutorDTO tutor = tutorService.getTutorById(tutorId);
+                SubjectDTO subject = subjectService.getSubjectById(subjectId);
+                String successMessage = "Bạn đã đặt lịch học môn " + subject.getName() + 
+                                        " với gia sư " + tutor.getUser().getFullName() + 
+                                        " vào ngày " + sessionDate + " lúc " + startTime + " thành công!";
+
+                // Success - redirect to student dashboard
+                redirectAttributes.addFlashAttribute("success", successMessage);
+                return "redirect:/dashboard/student";
             } catch (Exception e) {
                 // Lưu thông tin gỡ lỗi vào thông báo lỗi
                 String errorMessage = "Lỗi khi đặt lịch học: " + e.getMessage();
