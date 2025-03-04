@@ -48,9 +48,9 @@
                                                 <!-- Action Buttons -->
                                                 <div th:if="${isTutorProfile != null and !isTutorProfile}" class="d-flex align-items-center">
                                                     <!-- Book Session Button -->
-                                                    <button class="btn btn-primary me-3" data-bs-toggle="modal" data-bs-target="#bookSessionModal">
+                                                    <a th:href="@{/book/tutor/{id}(id=${tutor.id})}" class="btn btn-primary me-3">
                                                         Book Session
-                                                    </button>
+                                                    </a>
                                                     <!-- Favorite Button -->
                                                     <form th:if="${!isInFavorites}" th:action="@{/tutors/favorites/{id}(id=${tutor.id})}" method="post" class="me-3">
                                                         <button type="submit" class="btn btn-outline-danger">
@@ -74,7 +74,6 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <a th:if="${isTutorProfile != null and isTutorProfile}" th:href="@{/profile/edit}" class="btn btn-primary">Edit Profile</a>
                                     </div>
 
                                     <div class="row mb-3">
@@ -210,68 +209,6 @@
             </div>
         </div>
 
-        <!-- Book Session Modal -->
-        <div class="modal fade" id="bookSessionModal" tabindex="-1" aria-labelledby="bookSessionModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="bookSessionModalLabel">Book a Session</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <form th:action="@{/sessions/book}" method="post">
-                        <div class="modal-body">
-                            <input type="hidden" name="tutorId" th:value="${tutor.id}" />
-                            
-                            <!-- Subject Selection -->
-                            <div class="mb-3">
-                                <label for="subjectId" class="form-label">Subject</label>
-                                <select class="form-select" id="subjectId" name="subjectId" required>
-                                    <option value="">Select a subject</option>
-                                    <option th:each="subject : ${tutorSubjects}"
-                                            th:if="${subject.active}"
-                                            th:value="${subject.subjectId}"
-                                            th:text="${subject.subjectName + ' ($' + #numbers.formatDecimal(subject.hourlyRate, 1, 2) + '/hr)'}">
-                                    </option>
-                                </select>
-                            </div>
-
-                            <!-- Date -->
-                            <div class="mb-3">
-                                <label for="sessionDate" class="form-label">Date</label>
-                                <input type="date" class="form-control" id="sessionDate" name="sessionDate" required
-                                       th:min="${#dates.format(#dates.createNow(), 'yyyy-MM-dd')}" />
-                            </div>
-
-                            <!-- Time -->
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="startTime" class="form-label">Start Time</label>
-                                        <input type="time" class="form-control" id="startTime" name="startTime" required />
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="endTime" class="form-label">End Time</label>
-                                        <input type="time" class="form-control" id="endTime" name="endTime" required />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Notes -->
-                            <div class="mb-3">
-                                <label for="notes" class="form-label">Notes (Optional)</label>
-                                <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary">Book Session</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
     </div>
 </body>
 </html>

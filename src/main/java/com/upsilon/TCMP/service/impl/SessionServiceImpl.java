@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.Duration;
+import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -39,33 +40,78 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    public SessionDTO createSession(SessionDTO sessionDTO) {
+    public void validateTimeSlot(SessionDTO sessionDTO) {
+        // Validate future date
+        if (sessionDTO.getStartTime().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Cannot book a session in the past. Please select a future date and time.");
+        }
+
+        // Get tutor's availability
+        List<TutorAvailabilityDTO> availabilityList = tutorService.getTutorAvailability(sessionDTO.getTutor().getId());
+
+        // Check if requested time falls within tutor's availability
+        boolean isTimeAvailable = false;
+        DayOfWeek sessionDay = sessionDTO.getStartTime().getDayOfWeek();
+
+        for (TutorAvailabilityDTO availability : availabilityList) {
+            if (availability.getDayOfWeek().equals(sessionDay) &&
+                !sessionDTO.getStartTime().toLocalTime().isBefore(availability.getStartTime()) &&
+                !sessionDTO.getEndTime().toLocalTime().isAfter(availability.getEndTime())) {
+                isTimeAvailable = true;
+                break;
+            }
+        }
+
+        if (!isTimeAvailable) {
+            throw new IllegalArgumentException("The selected time slot is not within the tutor's available hours. Please check the tutor's availability schedule and select an available time slot.");
+        }
+
+        // Check for overlapping sessions
+        List<Session> existingSessions = sessionRepository.findAllByTutorId(sessionDTO.getTutor().getId());
+        for (Session existingSession : existingSessions) {
+            if (existingSession.getStatus() != SessionStatus.CANCELLED &&
+                sessionDTO.getStartTime().isBefore(existingSession.getEndTime()) &&
+                sessionDTO.getEndTime().isAfter(existingSession.getStartTime())) {
+                throw new IllegalArgumentException("This time slot overlaps with another booked session. Please select a different time.");
+            }
+        }
+    }
+
+    @Override
+    public SessionDTO createSession(SessionCreateDTO createDTO) {
+        // Convert date and time strings to LocalDateTime
+        LocalDateTime startDateTime = LocalDateTime.parse(createDTO.getSessionDate() + "T" + createDTO.getStartTime());
+        LocalDateTime endDateTime = LocalDateTime.parse(createDTO.getSessionDate() + "T" + createDTO.getEndTime());
+
+        // Create SessionDTO for validation
+        SessionDTO validationDTO = new SessionDTO();
+        validationDTO.setStartTime(startDateTime);
+        validationDTO.setEndTime(endDateTime);
+        TutorDTO tutorForValidation = new TutorDTO();
+        tutorForValidation.setId(createDTO.getTutorId());
+        validationDTO.setTutor(tutorForValidation);
+
+        // Validate the time slot
+        validateTimeSlot(validationDTO);
+
+        // Create the session
         Session session = new Session();
-        session.setStartTime(sessionDTO.getStartTime());
-        session.setEndTime(sessionDTO.getEndTime());
-        session.setStatus(SessionStatus.SCHEDULED);
-        session.setNotes(sessionDTO.getNotes());
+        session.setStartTime(startDateTime);
+        session.setEndTime(endDateTime);
+        session.setStatus(SessionStatus.PENDING);
+        session.setNotes(createDTO.getNotes());
 
-        // Convert DTOs to Entities using the service methods
-        StudentDTO studentDTO = studentService.getStudentById(sessionDTO.getStudent().getId());
-        TutorDTO tutorDTO = tutorService.getTutorById(sessionDTO.getTutor().getId());
-        SubjectDTO subjectDTO = subjectService.getSubjectById(sessionDTO.getSubject().getId());
-
-        // Create Student entity
+        // Set up entities
         Student student = new Student();
-        student.setId(studentDTO.getId());
-        
-        // Create Tutor entity
-        Tutor tutor = new Tutor();
-        tutor.setId(tutorDTO.getId());
-        
-        // Create Subject entity
-        Subject subject = new Subject();
-        subject.setId(subjectDTO.getId());
-        subject.setName(subjectDTO.getName());
-
+        student.setId(createDTO.getStudentId());
         session.setStudent(student);
+
+        Tutor tutor = new Tutor();
+        tutor.setId(createDTO.getTutorId());
         session.setTutor(tutor);
+
+        Subject subject = new Subject();
+        subject.setId(createDTO.getSubjectId());
         session.setSubject(subject);
 
         return convertToDTO(sessionRepository.save(session));

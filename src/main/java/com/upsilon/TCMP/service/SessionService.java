@@ -1,13 +1,16 @@
 package com.upsilon.TCMP.service;
 
 import com.upsilon.TCMP.dto.SessionDTO;
+import com.upsilon.TCMP.dto.SessionCreateDTO;
 import com.upsilon.TCMP.enums.SessionStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface SessionService {
-    SessionDTO createSession(SessionDTO sessionDTO);
+    SessionDTO createSession(SessionCreateDTO createDTO);
+    
+    void validateTimeSlot(SessionDTO sessionDTO);
     
     SessionDTO getSessionById(Integer id);
     

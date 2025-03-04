@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>Book a Session</title>
+    <style>
+        .booking-container {
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-top: 30px;
+        }
+        .tutor-info {
+            background: linear-gradient(45deg, #4e73df, #6f42c1);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .availability-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .price-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .time-slot-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            color: #333;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .time-slot-btn:hover {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #45a049;
+        }
+        .time-slot-btn.active {
+            background-color: #2E7D32;
+            color: white;
+            border-color: #1B5E20;
+        }
+        .price-details {
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <div class="booking-container">
+                <!-- Tutor Information -->
+                <div class="tutor-info d-flex align-items-center">
+                    <img th:if="${tutor.user.profilePictureUrl}"
+                         th:src="${tutor.user.profilePictureUrl}"
+                         class="rounded-circle me-4"
+                         style="width: 100px; height: 100px; object-fit: cover; border: 3px solid white;"
+                         alt="Profile Picture">
+                    <div>
+                        <h3 th:text="${tutor.user.fullName}">Tutor Name</h3>
+                        <div class="d-flex align-items-center">
+                            <div class="me-4">
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <span th:text="${#numbers.formatDecimal(tutor.rating, 1, 1)}">4.5</span>
+                            </div>
+                            <div>
+                                <i class="bi bi-calendar-check me-2"></i>
+                                <span th:text="${tutor.totalSessions ?: 0}">0</span> sessions
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error Messages -->
+                <div th:if="${error}" class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span th:text="${error}"></span>
+                </div>
+
+                <!-- No Availability Warning -->
+                <div th:if="${#lists.isEmpty(availability)}" class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    No available time slots found. Please contact the tutor to set up their availability.
+                </div>
+
+                <!-- Booking Form -->
+                <form th:if="${not #lists.isEmpty(availability)}" th:action="@{/book/session}" method="post">
+                    <input type="hidden" name="tutorId" th:value="${tutor.id}">
+                    
+                    <!-- Subject Selection -->
+                    <div class="subject-selection mb-4">
+                        <h5 class="mb-3">Select Subject</h5>
+                        <div class="row">
+                            <div th:each="subject : ${tutorSubjects}" class="col-md-4 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input subject-input" type="radio" 
+                                           name="subjectId" th:value="${subject.subjectId}" 
+                                           th:id="'subject-' + ${subject.subjectId}"
+                                           th:data-name="${subject.subjectName}"
+                                           th:data-rate="${subject.hourlyRate}"
+                                           required>
+                                    <label class="form-check-label" th:for="'subject-' + ${subject.subjectId}">
+                                        <span th:text="${subject.subjectName}">Subject Name</span>
+                                        <br>
+                                        <small class="text-muted" th:text="'$' + ${#numbers.formatDecimal(subject.hourlyRate, 1, 2)} + '/hr'">$50.00/hr</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Date & Time Selection -->
+                    <div class="availability-section">
+                        <h5 class="mb-3">Select Date & Time</h5>
+                        
+                        <!-- Date Selection -->
+                        <div class="mb-4">
+                            <label for="sessionDate" class="form-label">Date</label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="sessionDate" 
+                                   name="sessionDate" 
+                                   th:min="${#dates.format(#dates.createNow(), 'yyyy-MM-dd')}"
+                                   required>
+                        </div>
+
+                        <!-- Time Slots -->
+                        <div class="mb-4">
+                            <label class="form-label">Available Time Slots</label>
+                            <div class="time-slots">
+                                <th:block th:each="slot : ${availability}">
+                                    <div class="form-check">
+                                        <input type="radio" 
+                                               class="form-check-input" 
+                                               name="timeSelection" 
+                                               th:id="'slot-' + ${slot.id}"
+                                               th:value="${slot.startTime + ',' + slot.endTime}"
+                                               required>
+                                        <input type="hidden" name="startTime" th:value="${slot.startTime}">
+                                        <input type="hidden" name="endTime" th:value="${slot.endTime}">
+                                        <label class="form-check-label time-slot-btn" 
+                                               th:for="'slot-' + ${slot.id}"
+                                               th:text="${slot.startTime + ' - ' + slot.endTime}">
+                                            9:00 - 10:00
+                                        </label>
+                                    </div>
+                                </th:block>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mb-4">
+                        <label for="notes" class="form-label">Additional Notes (Optional)</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                    </div>
+
+                    <!-- Price Summary -->
+                    <div class="price-info mb-4">
+                        <h5>Price Summary</h5>
+                        <div id="price-summary" class="price-details">
+                            <div class="text-center text-muted">
+                                Please select a subject to see the price details
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary btn-lg px-5">
+                            Book Session
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var subjectInputs = document.querySelectorAll('.subject-input');
+            var priceSummary = document.getElementById('price-summary');
+
+            subjectInputs.forEach(function(input) {
+                input.addEventListener('change', function() {
+                    if (this.checked) {
+                        var subjectName = this.getAttribute('data-name');
+                        var rate = parseFloat(this.getAttribute('data-rate'));
+                        priceSummary.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="fw-bold">${subjectName}</span>
+                                </div>
+                                <div>
+                                    <span class="badge bg-primary">$${rate.toFixed(2)}/hr</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
