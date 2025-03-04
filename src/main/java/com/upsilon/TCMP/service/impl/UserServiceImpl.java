@@ -3,8 +3,6 @@ package com.upsilon.TCMP.service.impl;
 import com.upsilon.TCMP.dto.*;
 import com.upsilon.TCMP.entity.User;
 import com.upsilon.TCMP.enums.Role;
-import com.upsilon.TCMP.repository.StudentRepository;
-import com.upsilon.TCMP.repository.TutorRepository;
 import com.upsilon.TCMP.repository.UserRepository;
 import com.upsilon.TCMP.service.UserService;
 import com.upsilon.TCMP.config.FileStorageConfig;
@@ -26,25 +24,15 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
-
-    private final UserRepository userRepository;
-    private final StudentRepository studentRepository;
-    private final TutorRepository tutorRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final FileStorageConfig fileStorageConfig;
+    @Autowired
+    private  UserRepository userRepository;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository,
-                         StudentRepository studentRepository,
-                         TutorRepository tutorRepository,
-                         PasswordEncoder passwordEncoder,
-                         FileStorageConfig fileStorageConfig) {
-        this.userRepository = userRepository;
-        this.studentRepository = studentRepository;
-        this.tutorRepository = tutorRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.fileStorageConfig = fileStorageConfig;
-    }
+    private  PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private  FileStorageConfig fileStorageConfig;
+
 
     @Override
     public UserDTO createUser(UserDTO userDTO) {

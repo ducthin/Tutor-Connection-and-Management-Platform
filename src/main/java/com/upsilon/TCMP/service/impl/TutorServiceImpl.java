@@ -194,19 +194,27 @@ public class TutorServiceImpl implements TutorService {
     public TutorDTO getTutorById(Integer id) {
         log.info("Getting tutor by ID: {}", id);
         try {
+            log.debug("Attempting to find tutor with ID: {}", id);
             Optional<Tutor> tutorOpt = tutorRepository.findByIdWithUser(id);
+
             if (!tutorOpt.isPresent()) {
-                log.error("No tutor found with ID: {}", id);
+                log.error("No tutor found with ID: {}. Database query returned no results.", id);
                 throw new RuntimeException("Tutor not found");
             }
             
             Tutor tutor = tutorOpt.get();
+            log.debug("Found tutor entity with ID: {}. Checking user association...", id);
+
             if (tutor.getUser() == null) {
-                log.error("Tutor {} has no associated user", id);
+                log.error("Tutor {} exists but has no associated user. This indicates data integrity issues.", id);
                 throw new RuntimeException("Tutor has no associated user");
             }
             
-            log.info("Found tutor: {} with user: {}", id, tutor.getUser().getEmail());
+            log.info("Successfully found tutor: {} (ID: {}) with user: {} (ID: {})",
+                    tutor.getUser().getFullName(),
+                    id,
+                    tutor.getUser().getEmail(),
+                    tutor.getUser().getId());
             return convertToTutorDTO(tutor);
         } catch (Exception e) {
             log.error("Error getting tutor {}: {}", id, e.getMessage());
@@ -329,6 +337,7 @@ public class TutorServiceImpl implements TutorService {
     @Override
     @Transactional(readOnly = true)
     public List<TutorSubjectDTO> getTutorSubjects(Integer tutorId) {
+        log.info("Fetching subjects for tutor ID: {}", tutorId);
         try {
             System.out.println("Getting subjects for tutor: " + tutorId);
             
@@ -627,11 +636,16 @@ public class TutorServiceImpl implements TutorService {
 
     @Override
     @PreAuthorize("hasAnyRole('ADMIN', 'TUTOR', 'STUDENT')")
+    @Transactional(readOnly = true)
     public List<TutorAvailabilityDTO> getTutorAvailability(Integer tutorId) {
+        log.info("Fetching availability for tutor ID: {}", tutorId);
         Tutor tutor = tutorRepository.findById(tutorId)
                 .orElseThrow(() -> new RuntimeException("Tutor not found"));
-                
-        return availabilityRepository.findByTutor(tutor).stream()
+        
+        List<TutorAvailability> availabilities = availabilityRepository.findByTutor(tutor);
+        log.info("Found {} availability slots for tutor {}", availabilities.size(), tutorId);
+        
+        return availabilities.stream()
                 .map(this::convertToAvailabilityDTO)
                 .collect(Collectors.toList());
     }

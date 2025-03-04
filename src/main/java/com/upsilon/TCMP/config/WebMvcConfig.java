@@ -13,7 +13,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
 
     @Override
-    public void addViewControllers(ViewControllerRegistry registry) {
+    public void addViewControllers(@NonNull ViewControllerRegistry registry) {
         System.out.println("=== Configuring View Controllers ===");
         
         // Home pages

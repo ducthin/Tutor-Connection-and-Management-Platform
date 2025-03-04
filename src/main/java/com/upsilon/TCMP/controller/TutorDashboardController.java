@@ -21,8 +21,6 @@ public class TutorDashboardController {
     @Autowired
     private TutorService tutorService;
 
-    @Autowired
-    private SessionService sessionService;
 
     @GetMapping({"/", "/dashboard"})
     public String dashboard(Authentication auth, Model model) {

@@ -2,7 +2,6 @@ package com.upsilon.TCMP.service;
 
 import com.upsilon.TCMP.dto.UserRegistrationDTO;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthenticationService {
 
-    private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
     @Transactional

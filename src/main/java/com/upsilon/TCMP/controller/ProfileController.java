@@ -13,8 +13,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
 import jakarta.validation.Valid;
+import java.util.List;
+
 
 @Controller
 @RequestMapping("/profile")
@@ -38,6 +39,23 @@ public class ProfileController {
             } else if (user.getRole() == Role.ROLE_TUTOR) {
                 TutorDTO tutor = tutorService.getTutorByUserId(user.getId());
                 model.addAttribute("tutor", tutor);
+                model.addAttribute("isTutorProfile", true);
+                
+                // Add tutor subjects and availability
+                List<TutorSubjectDTO> tutorSubjects = tutorService.getTutorSubjects(tutor.getId());
+                List<TutorAvailabilityDTO> availability = tutorService.getTutorAvailability(tutor.getId());
+                List<ReviewDTO> recentReviews = tutorService.getRecentTutorReviews(tutor.getId(), 5);
+                Double averageRating = tutorService.getAverageRating(tutor.getId());
+
+                model.addAttribute("tutorSubjects", tutorSubjects);
+                model.addAttribute("availability", availability);
+                model.addAttribute("recentReviews", recentReviews);
+                model.addAttribute("averageRating", averageRating);
+
+                // Debug logging
+                System.out.println("Tutor subjects: " + (tutorSubjects != null ? tutorSubjects.size() : "null"));
+                System.out.println("Availability slots: " + (availability != null ? availability.size() : "null"));
+                
                 return "profile/tutor";
             }
 

@@ -14,7 +14,7 @@ public class Tutor {
     @Column(name = "tutor_id")
     private Integer id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(name = "tutors_ibfk_1"))
     private User user;
 

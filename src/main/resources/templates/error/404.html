@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title>404 - Not Found</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8 text-center">
+                    <div class="mt-5">
+                        <h1 class="display-1">404</h1>
+                        <h2 class="display-4">Not Found</h2>
+                        <div class="alert alert-warning" role="alert" th:if="${error}" th:text="${error}">
+                            The requested resource was not found.
+                        </div>
+                        <p class="lead" th:unless="${error}">The page you're looking for doesn't exist or has been moved.</p>
+                        <div class="mt-4">
+                            <a href="/tutors/search" class="btn btn-primary me-3">Search Tutors</a>
+                            <a href="/" class="btn btn-outline-secondary">Go Home</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

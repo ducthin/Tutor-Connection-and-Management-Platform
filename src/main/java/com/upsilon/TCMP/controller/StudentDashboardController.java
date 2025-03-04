@@ -23,8 +23,6 @@ public class StudentDashboardController {
     @Autowired
     private SessionService sessionService;
 
-    @Autowired
-    private TutorService tutorService;
 
     @GetMapping({"/", "/dashboard"})
     public String dashboard(Authentication auth, Model model) {

@@ -27,9 +27,6 @@ public class AdminDashboardController {
     private TutorService tutorService;
 
     @Autowired
-    private StudentService studentService;
-
-    @Autowired
     private SessionService sessionService;
 
     @Autowired

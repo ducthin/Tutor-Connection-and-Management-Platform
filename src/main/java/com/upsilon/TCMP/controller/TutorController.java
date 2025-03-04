@@ -2,7 +2,6 @@ package com.upsilon.TCMP.controller;
 
 import com.upsilon.TCMP.dto.*;
 import com.upsilon.TCMP.enums.DayOfWeek;
-import com.upsilon.TCMP.repository.TutorSubjectRepository;
 import com.upsilon.TCMP.service.SubjectService;
 import com.upsilon.TCMP.service.TutorService;
 import com.upsilon.TCMP.service.UserService;
@@ -31,8 +30,6 @@ private UserService userService;
 @Autowired
 private SubjectService subjectService;
 
-@Autowired
-private TutorSubjectRepository tutorSubjectRepository;
 
 @GetMapping("/profile")
 public String viewProfile(Authentication auth, Model model) {
@@ -117,28 +114,90 @@ public String availability(Authentication auth, Model model) {
 }
 
 
-    @PostMapping("/subjects/add")
+    @PostMapping("/add-subject")
     public String addSubject(
             Authentication auth,
             @Valid @ModelAttribute TutorSubjectCreateDTO createDTO,
             BindingResult bindingResult,
             Model model) {
         try {
+            System.out.println("=== Processing POST /tutor/add-subject ===");
+            System.out.println("Subject ID: " + createDTO.getSubjectId());
+            System.out.println("Experience Years: " + createDTO.getExperienceYears());
+            System.out.println("Rate: " + createDTO.getRate());
+            
             if (bindingResult.hasErrors()) {
+                System.out.println("Validation errors found:");
+                bindingResult.getAllErrors().forEach(error ->
+                    System.out.println(" - " + error.getDefaultMessage())
+                );
                 model.addAttribute("error", "Invalid input. Please check your data.");
-                return subjects(auth, model);
+                return showAddNewSubjectForm(auth, model);
             }
 
             UserDTO user = userService.getUserByEmail(auth.getName());
+            if (user == null) {
+                throw new RuntimeException("User not found");
+            }
+            
             TutorDTO tutor = tutorService.getTutorByUserId(user.getId());
+            if (tutor == null) {
+                throw new RuntimeException("Tutor not found");
+            }
+            
             createDTO.setTutorId(tutor.getId());
             
+            System.out.println("Adding subject for tutor ID: " + tutor.getId());
             tutorService.addSubject(tutor.getId(), createDTO);
+            
+            System.out.println("Subject added successfully");
+            System.out.println("=====================================");
+            
             model.addAttribute("success", "Subject added successfully");
             return "redirect:/tutor/subjects";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
             return subjects(auth, model);
+        }
+    }
+@GetMapping("/add-subject")
+public String showAddNewSubjectForm(Authentication auth, Model model) {
+    try {
+        // Get the tutor information
+        UserDTO user = userService.getUserByEmail(auth.getName());
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+        
+        TutorDTO tutor = tutorService.getTutorByUserId(user.getId());
+        if (tutor == null) {
+            throw new RuntimeException("Tutor not found");
+        }
+
+        // Get list of subjects
+        List<SubjectDTO> allSubjects = subjectService.getAllSubjects();
+        if (allSubjects == null || allSubjects.isEmpty()) {
+            System.out.println("Warning: No subjects found in the database");
+            allSubjects = new ArrayList<>(); // Ensure we at least have an empty list
+        }
+
+        System.out.println("=== Debug Info for /tutor/add-subject ===");
+        System.out.println("User email: " + auth.getName());
+        System.out.println("Tutor ID: " + tutor.getId());
+        System.out.println("Number of subjects found: " + allSubjects.size());
+        allSubjects.forEach(subject ->
+            System.out.println(" - " + subject.getName() + " (ID: " + subject.getId() + ", Active: " + subject.isActive() + ")")
+        );
+        System.out.println("=====================================");
+
+        // Add required attributes to model
+        model.addAttribute("tutor", tutor);
+        model.addAttribute("allSubjects", allSubjects);
+        model.addAttribute("user", user);
+        return "tutor/add-subject";
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+            return "redirect:/tutor/subjects";
         }
     }
 

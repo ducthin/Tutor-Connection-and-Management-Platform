@@ -8,13 +8,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import com.upsilon.TCMP.config.CustomUserDetailsService;
-import com.upsilon.TCMP.dto.TutorDTO;
-import com.upsilon.TCMP.service.TutorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
 import java.util.Set;
 
 @Controller
@@ -76,9 +73,6 @@ public class DashboardController {
             return "dashboard/index";
         }
     }
-
-    @Autowired
-    private TutorService tutorService;
 
     @GetMapping("/tutor")
     public String tutorDashboard() {

@@ -15,7 +15,7 @@
                             <h2 class="card-title">Add New Subject</h2>
                         </div>
                         <div class="card-body">
-                            <form th:action="@{/tutor/subjects/add}" method="post">
+                            <form th:action="@{/tutor/add-subject}" method="post">
                                 <!-- Alert for feedback -->
                                 <div th:if="${success}" class="alert alert-success" role="alert" th:text="${success}"></div>
                                 <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
