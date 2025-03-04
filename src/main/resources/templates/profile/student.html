@@ -89,21 +89,19 @@
                                             <th>Tutor</th>
                                             <th>Subject</th>
                                             <th>Status</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr th:each="session : ${student.sessions}">
-                                            <td th:text="${#temporals.format(session.startTime, 'MMM dd, yyyy HH:mm')}">Date</td>
-                                            <td th:text="${session.tutor?.user?.fullName}">Tutor Name</td>
-                                            <td th:text="${session.subject?.name}">Subject</td>
+                                        <tr th:each="tutorSession : ${student.sessions}">
+                                            <td th:text="${#temporals.format(tutorSession.startTime, 'dd MMM yyyy, HH:mm')}">01/01/2025, 09:00</td>
+                                            <td th:text="${tutorSession.subject.name}">Mathematics</td>
+                                            <td th:text="${tutorSession.tutor.user.fullName}">John Smith</td>
+                                            <td th:text="${tutorSession.status}">COMPLETED</td>
                                             <td>
-                                                <span th:text="${session.status}"
-                                                      th:class="${'badge ' + 
-                                                      (session.status == 'COMPLETED' ? 'bg-success' : 
-                                                       session.status == 'CANCELLED' ? 'bg-danger' : 
-                                                       session.status == 'PENDING' ? 'bg-warning' : 'bg-primary')}">
-                                                    Status
-                                                </span>
+                                                <a th:href="@{/sessions/{id}(id=${tutorSession.id})}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
                                             </td>
                                         </tr>
                                     </tbody>

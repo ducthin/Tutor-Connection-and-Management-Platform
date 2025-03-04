@@ -1,77 +1,154 @@
 package com.upsilon.TCMP.controller;
 
 import com.upsilon.TCMP.dto.*;
+import com.upsilon.TCMP.enums.Role;
 import com.upsilon.TCMP.enums.SessionStatus;
 import com.upsilon.TCMP.service.SessionService;
 import com.upsilon.TCMP.service.StudentService;
+import com.upsilon.TCMP.service.TutorService;
+import com.upsilon.TCMP.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 
+/**
+ * Manages session operations like confirmation, cancellation, completion
+ * Note: For session booking, use SessionBookingController instead
+ */
 @Controller
 @RequestMapping("/sessions")
 public class SessionController {
 
     private final SessionService sessionService;
     private final StudentService studentService;
+    private final UserService userService;
+    private final TutorService tutorService;
 
     @Autowired
-    public SessionController(SessionService sessionService, StudentService studentService) {
+    public SessionController(
+            SessionService sessionService, 
+            StudentService studentService,
+            UserService userService,
+            TutorService tutorService) {
         this.sessionService = sessionService;
         this.studentService = studentService;
+        this.userService = userService;
+        this.tutorService = tutorService;
     }
 
-    @PostMapping("/book")
-    public String bookSession(SessionCreateDTO createDTO, 
-                            @AuthenticationPrincipal UserDetails userDetails,
-                            RedirectAttributes redirectAttributes) {
+    @GetMapping
+    public String viewAllSessions(Model model, Authentication auth) {
+        UserDTO userDTO = userService.getUserByEmail(auth.getName());
+        if (userDTO.getRole() == Role.ROLE_TUTOR) {
+            return "redirect:/sessions/tutor";
+        } else if (userDTO.getRole() == Role.ROLE_STUDENT) {
+            return "redirect:/sessions/student";
+        } else {
+            return "redirect:/dashboard";
+        }
+    }
+
+    @GetMapping("/tutor")
+    @PreAuthorize("hasRole('TUTOR')")
+    public String viewTutorSessions(Model model, Authentication auth) {
+        UserDTO userDTO = userService.getUserByEmail(auth.getName());
+        TutorDTO tutorDTO = tutorService.getTutorByUserId(userDTO.getId());
+        
+        List<SessionDTO> upcomingSessions = sessionService.findUpcomingSessionsByTutorId(tutorDTO.getId());
+        List<SessionDTO> completedSessions = sessionService.findCompletedSessionsByTutorId(tutorDTO.getId());
+        
+        model.addAttribute("upcomingSessions", upcomingSessions);
+        model.addAttribute("completedSessions", completedSessions);
+        
+        return "tutor/sessions";
+    }
+
+    @GetMapping("/student")
+    @PreAuthorize("hasRole('STUDENT')")
+    public String viewStudentSessions(Model model, Authentication auth) {
+        UserDTO userDTO = userService.getUserByEmail(auth.getName());
+        StudentDTO studentDTO = studentService.getStudentByUserId(userDTO.getId());
+        
+        List<SessionDTO> upcomingSessions = sessionService.findUpcomingSessionsByStudentId(studentDTO.getId());
+        List<SessionDTO> completedSessions = sessionService.findCompletedSessionsByStudentId(studentDTO.getId());
+        
+        model.addAttribute("upcomingSessions", upcomingSessions);
+        model.addAttribute("completedSessions", completedSessions);
+        
+        return "student/sessions";
+    }
+
+    @PostMapping("/{id}/confirm")
+    @PreAuthorize("hasRole('TUTOR')")
+    public String confirmSession(@PathVariable("id") Integer sessionId, RedirectAttributes redirectAttributes) {
         try {
-            // Get current student from logged-in user
-            StudentDTO studentDTO = studentService.getStudentByEmail(userDetails.getUsername());
-            createDTO.setStudentId(studentDTO.getId());
-
-            // Convert date and time strings to LocalDateTime
-            LocalDate date = LocalDate.parse(createDTO.getSessionDate());
-            LocalTime startTime = LocalTime.parse(createDTO.getStartTime());
-            LocalTime endTime = LocalTime.parse(createDTO.getEndTime());
-
-            SessionDTO sessionDTO = new SessionDTO();
-            sessionDTO.setStartTime(LocalDateTime.of(date, startTime));
-            sessionDTO.setEndTime(LocalDateTime.of(date, endTime));
-            sessionDTO.setNotes(createDTO.getNotes());
-            sessionDTO.setStatus(SessionStatus.PENDING);
-
-            // Set up relationships
-            StudentDTO student = new StudentDTO();
-            student.setId(studentDTO.getId());
-            sessionDTO.setStudent(student);
-
-            // Set up tutor reference
-            TutorDTO tutor = new TutorDTO();
-            tutor.setId(createDTO.getTutorId());
-            sessionDTO.setTutor(tutor);
-
-            // Set up subject reference
-            SubjectDTO subject = new SubjectDTO();
-            subject.setId(createDTO.getSubjectId());
-            sessionDTO.setSubject(subject);
-
-            sessionService.createSession(sessionDTO);
-
-            redirectAttributes.addFlashAttribute("success", "Session booked successfully!");
-            return "redirect:/tutors/profile/" + createDTO.getTutorId();
-
+            sessionService.confirmSession(sessionId);
+            redirectAttributes.addFlashAttribute("success", "Buổi học đã được xác nhận thành công.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Failed to book session: " + e.getMessage());
-            return "redirect:/tutors/profile/" + createDTO.getTutorId();
+            redirectAttributes.addFlashAttribute("error", "Không thể xác nhận buổi học: " + e.getMessage());
+        }
+        return "redirect:/sessions/tutor";
+    }
+
+    @PostMapping("/{id}/cancel")
+    public String cancelSession(
+            @PathVariable("id") Integer sessionId, 
+            @RequestParam("reason") String reason,
+            RedirectAttributes redirectAttributes,
+            Authentication auth) {
+        try {
+            UserDTO userDTO = userService.getUserByEmail(auth.getName());
+            // Xác thực xem người dùng có quyền hủy buổi học hay không
+            SessionDTO sessionDTO = sessionService.getSessionById(sessionId);
+            
+            // Thực hiện hủy buổi học
+            sessionService.cancelSession(sessionId, reason);
+            redirectAttributes.addFlashAttribute("success", "Buổi học đã được hủy.");
+            
+            // Chuyển hướng dựa vào vai trò người dùng
+            if (userDTO.getRole() == Role.ROLE_TUTOR) {
+                return "redirect:/sessions/tutor";
+            } else {
+                return "redirect:/sessions/student";
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Không thể hủy buổi học: " + e.getMessage());
+            return "redirect:/sessions";
+        }
+    }
+
+    @PostMapping("/{id}/complete")
+    @PreAuthorize("hasRole('TUTOR')")
+    public String completeSession(@PathVariable("id") Integer sessionId, RedirectAttributes redirectAttributes) {
+        try {
+            sessionService.completeSession(sessionId);
+            redirectAttributes.addFlashAttribute("success", "Buổi học đã được đánh dấu là hoàn thành.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Không thể hoàn thành buổi học: " + e.getMessage());
+        }
+        return "redirect:/sessions/tutor";
+    }
+
+    @GetMapping("/{id}")
+    public String viewSessionDetails(@PathVariable("id") Integer sessionId, Model model, Authentication auth) {
+        try {
+            SessionDTO sessionDTO = sessionService.getSessionById(sessionId);
+            model.addAttribute("session", sessionDTO);
+            return "session/details";
+        } catch (Exception e) {
+            model.addAttribute("error", "Không thể tìm thấy buổi học: " + e.getMessage());
+            return "error";
         }
     }
 }
