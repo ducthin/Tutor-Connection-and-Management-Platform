@@ -2,7 +2,6 @@ package com.upsilon.TCMP.controller;
 
 import com.upsilon.TCMP.dto.*;
 import com.upsilon.TCMP.enums.Role;
-import com.upsilon.TCMP.enums.SessionStatus;
 import com.upsilon.TCMP.service.SessionService;
 import com.upsilon.TCMP.service.StudentService;
 import com.upsilon.TCMP.service.TutorService;
@@ -10,16 +9,11 @@ import com.upsilon.TCMP.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 /**

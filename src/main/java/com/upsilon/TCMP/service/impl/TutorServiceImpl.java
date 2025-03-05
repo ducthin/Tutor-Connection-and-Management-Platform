@@ -493,9 +493,10 @@ public class TutorServiceImpl implements TutorService {
                 tutorSubject.setDescription(updateDTO.getDescription());
             }
             
-            if (updateDTO.getActive() != null) {
-                System.out.println("Updating active status from " + tutorSubject.isActive() + " to " + updateDTO.getActive());
-                tutorSubject.setActive(updateDTO.getActive());
+            Boolean activeStatus = updateDTO.getActive();
+            if (activeStatus != null) {
+                System.out.println("Updating active status from " + tutorSubject.isActive() + " to " + activeStatus);
+                tutorSubject.setActive(activeStatus);
             }
 
             TutorSubject savedTutorSubject = tutorSubjectRepository.save(tutorSubject);
@@ -1049,6 +1050,22 @@ public class TutorServiceImpl implements TutorService {
         } catch (IOException ex) {
             throw new RuntimeException("Could not upload profile picture", ex);
         }
+    }
+
+    @Override
+    @PreAuthorize("hasAnyRole('ADMIN', 'TUTOR')")
+    public TutorSubjectDTO getTutorSubject(Integer tutorId, Integer subjectId) {
+        validateTutorAccess(tutorId);
+        
+        TutorSubject tutorSubject = tutorSubjectRepository.findById(subjectId)
+                .orElseThrow(() -> new RuntimeException("Subject not found"));
+                
+        // Verify the subject belongs to the tutor
+        if (!tutorSubject.getTutor().getId().equals(tutorId)) {
+            throw new AccessDeniedException("Not authorized to access this subject");
+        }
+        
+        return convertToTutorSubjectDTO(tutorSubject);
     }
 
     private TutorSubjectDTO convertToTutorSubjectDTO(TutorSubject tutorSubject) {

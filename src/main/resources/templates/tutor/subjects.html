@@ -31,7 +31,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="subject : ${tutorSubjects}">
+                        <tr th:each="subject : ${tutorSubjects[5]}">
                             <td th:text="${subject.subjectName}"></td>
                             <td th:text="${subject.experienceYears}"></td>
                             <td th:text="${#numbers.formatDecimal(subject.hourlyRate, 1, 2)}"></td>

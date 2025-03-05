@@ -1,8 +1,6 @@
 package com.upsilon.TCMP.controller;
 
 import com.upsilon.TCMP.dto.*;
-import com.upsilon.TCMP.service.ReviewService;
-import com.upsilon.TCMP.service.SessionService;
 import com.upsilon.TCMP.service.TutorService;
 import com.upsilon.TCMP.service.UserService;
 import com.upsilon.TCMP.service.StudentService;
@@ -27,11 +25,6 @@ public class TutorProfileController {
     @Autowired
     private TutorService tutorService;
     
-    @Autowired
-    private SessionService sessionService;
-    
-    @Autowired
-    private ReviewService reviewService;
     
     @Autowired
     private UserService userService;

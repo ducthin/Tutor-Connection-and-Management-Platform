@@ -25,6 +25,7 @@ public interface TutorService {
     
     // Subject management
     List<TutorSubjectDTO> getTutorSubjects(Integer tutorId);
+    TutorSubjectDTO getTutorSubject(Integer tutorId, Integer subjectId);
     
     TutorSubjectDTO addSubject(Integer tutorId, TutorSubjectCreateDTO createDTO);
     

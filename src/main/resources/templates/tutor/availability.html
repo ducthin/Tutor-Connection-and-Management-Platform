@@ -5,30 +5,100 @@
 <head>
     <title>Manage Availability</title>
     <style>
+        /* Table styles */
+        .table {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
         .table td {
             vertical-align: middle;
             min-width: 100px;
-            height: 50px;
+            height: 60px;
+            transition: background-color 0.2s;
+        }
+        .table td:hover {
+            background-color: #f8f9fa;
         }
         .table th:first-child {
             width: 100px;
         }
         .table th {
             text-align: center;
-            background-color: #f8f9fa;
+            background-color: #f3f4f6;
+            padding: 15px 10px;
+            font-weight: 600;
+            color: #444;
         }
+
+        /* Time slot buttons */
         .btn-outline-secondary {
-            border: none;
-            opacity: 0.2;
+            border: 1px dashed #dee2e6;
+            opacity: 0.6;
+            transition: all 0.2s;
+            padding: 8px 12px;
+            border-radius: 6px;
         }
         .btn-outline-secondary:hover {
             opacity: 1;
-            background: none;
-            color: #6c757d;
+            background-color: #e9ecef;
+            color: #495057;
+            border-color: #adb5bd;
+            transform: scale(1.05);
         }
+
+        /* Available slot styling */
         .badge.bg-success {
             font-size: 0.9em;
-            padding: 0.5em 0.7em;
+            padding: 0.6em 0.8em;
+            background-color: #28a745 !important;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* Delete button */
+        .btn-outline-danger {
+            border: none;
+            transition: all 0.2s;
+            padding: 8px;
+        }
+        .btn-outline-danger:hover {
+            background-color: #dc3545;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* Legend */
+        .availability-legend {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        
+        /* Card styling */
+        .card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 20px;
+        }
+        .card-body {
+            padding: 20px;
         }
     </style>
 </head>
@@ -44,10 +114,29 @@
                     <!-- Calendar View -->
                     <div class="card">
                         <div class="card-header">
-                            <h4 class="mb-0">Weekly Availability</h4>
-                            <small class="text-muted">Click + to add a time slot, × to remove</small>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h4 class="mb-1">Weekly Availability</h4>
+                                    <small class="text-muted">Set your available time slots for tutoring sessions</small>
+                                </div>
+                            </div>
                         </div>
                         <div class="card-body">
+                            <!-- Legend -->
+                            <div class="availability-legend">
+                                <div class="legend-item">
+                                    <i class="fas fa-plus text-secondary"></i>
+                                    <span>Click to add availability</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="badge bg-success">Available</span>
+                                    <span>Active time slot</span>
+                                </div>
+                                <div class="legend-item">
+                                    <i class="fas fa-times text-danger"></i>
+                                    <span>Click to remove</span>
+                                </div>
+                            </div>
                             <div class="table-responsive">
                                 <table class="table table-bordered">
                                     <thead>
@@ -67,24 +156,27 @@
                                             <td th:text="${slot}"></td>
                                             <td th:each="day : ${days}">
                                                 <th:block th:with="avail=${availabilityMatrix.get(day).get(slot)}">
-                                                    <div th:if="${avail}" class="d-flex justify-content-between align-items-center">
-                                                        <span class="badge bg-success">Available</span>
+                                                    <div th:if="${avail}" class="d-flex justify-content-between align-items-center p-2">
+                                                        <span class="badge bg-success flex-grow-1 me-2 text-center">Available</span>
                                                         <form th:action="@{/tutor/availability/__${avail.id}__/delete}"
-                                                              method="post" class="d-inline ms-2"
-                                                              onsubmit="return confirm('Remove this time slot?');">
-                                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                              method="post" class="d-inline"
+                                                              onsubmit="return confirm('Are you sure you want to remove this available time slot?');">
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                                    title="Remove time slot">
                                                                 <i class="fas fa-times"></i>
                                                             </button>
                                                         </form>
                                                     </div>
-                                                    <div th:unless="${avail}" class="text-center">
-                                                        <form th:action="@{/tutor/availability/add}" method="post" class="d-inline">
+                                                    <div th:unless="${avail}" class="text-center p-2">
+                                                        <form th:action="@{/tutor/availability/add}" method="post" class="d-inline w-100">
                                                             <input type="hidden" name="dayOfWeek" th:value="${day.name()}">
                                                             <input type="hidden" name="startTime" th:value="${slot}">
                                                             <input type="hidden" name="endTime"
-                                                                   th:value="${T(java.time.LocalTime).parse(slot).plusHours(1).format(T(java.time.format.DateTimeFormatter).ofPattern('HH:mm'))}">
-                                                            <button type="submit" class="btn btn-sm btn-outline-secondary">
-                                                                <i class="fas fa-plus"></i>
+                                                                    th:value="${T(java.time.LocalTime).parse(slot).plusHours(1).format(T(java.time.format.DateTimeFormatter).ofPattern('HH:mm'))}">
+                                                            <button type="submit" class="btn btn-sm btn-outline-secondary w-100"
+                                                                    th:title="|Make available on ${day.name()} at ${slot}|">
+                                                                <i class="fas fa-plus me-1"></i>
+                                                                <small class="d-none d-md-inline">Add</small>
                                                             </button>
                                                         </form>
                                                     </div>

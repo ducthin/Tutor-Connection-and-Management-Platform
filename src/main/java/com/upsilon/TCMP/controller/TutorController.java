@@ -60,7 +60,14 @@ public String viewProfile(Authentication auth, Model model) {
 public String subjects(Authentication auth, Model model) {
     try {
         UserDTO user = userService.getUserByEmail(auth.getName());
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+        
         TutorDTO tutor = tutorService.getTutorByUserId(user.getId());
+        if (tutor == null) {
+            throw new RuntimeException("Tutor not found");
+        }
         
         List<TutorSubjectDTO> tutorSubjects = tutorService.getTutorSubjects(tutor.getId());
         List<SubjectDTO> allSubjects = subjectService.getAllSubjects();
@@ -70,8 +77,8 @@ public String subjects(Authentication auth, Model model) {
         
         return "tutor/subjects";
     } catch (Exception e) {
-        model.addAttribute("error", e.getMessage());
-        return "redirect:/dashboard";
+        model.addAttribute("error", "Failed to load subjects: " + e.getMessage());
+        return "tutor/subjects"; // Stay on subjects page to show error
     }
 }
 
@@ -276,7 +283,57 @@ public String showAddNewSubjectForm(Authentication auth, Model model) {
        }
    }
 
-    @PostMapping("/availability/{id}/delete")
+        @GetMapping("/subjects/{id}/edit")
+        public String showEditSubjectForm(
+                Authentication auth,
+                @PathVariable("id") Integer subjectId,
+                Model model) {
+            try {
+                UserDTO user = userService.getUserByEmail(auth.getName());
+                TutorDTO tutor = tutorService.getTutorByUserId(user.getId());
+                
+                // Get the subject details
+                TutorSubjectDTO subject = tutorService.getTutorSubject(tutor.getId(), subjectId);
+                if (subject == null) {
+                    throw new RuntimeException("Subject not found");
+                }
+                
+                model.addAttribute("subject", subject);
+                return "tutor/edit-subject";
+                
+            } catch (Exception e) {
+                model.addAttribute("error", "Failed to load subject: " + e.getMessage());
+                return "redirect:/tutor/subjects";
+            }
+        }
+    
+        @PostMapping("/subjects/{id}/update")
+        public String updateSubject(
+                Authentication auth,
+                @PathVariable("id") Integer subjectId,
+                @Valid @ModelAttribute TutorSubjectUpdateDTO updateDTO,
+                BindingResult bindingResult,
+                Model model) {
+            try {
+                if (bindingResult.hasErrors()) {
+                    model.addAttribute("error", "Invalid input. Please check your data.");
+                    return showEditSubjectForm(auth, subjectId, model);
+                }
+    
+                UserDTO user = userService.getUserByEmail(auth.getName());
+                TutorDTO tutor = tutorService.getTutorByUserId(user.getId());
+                
+                tutorService.updateSubject(tutor.getId(), subjectId, updateDTO);
+                model.addAttribute("success", "Subject updated successfully");
+                return "redirect:/tutor/subjects";
+                
+            } catch (Exception e) {
+                model.addAttribute("error", "Failed to update subject: " + e.getMessage());
+                return showEditSubjectForm(auth, subjectId, model);
+            }
+        }
+    
+        @PostMapping("/availability/{id}/delete")
     public String deleteAvailability(
             Authentication auth,
             @PathVariable("id") Integer availabilityId,
