@@ -69,4 +69,7 @@ public interface SessionRepository extends JpaRepository<Session, Integer> {
            "AND s.status = 'COMPLETED' " +
            "GROUP BY s.subject.name")
     List<Object[]> getStudentSubjectHoursDistribution(@Param("studentId") Integer studentId);
+
+    @Query("SELECT s FROM Session s WHERE s.tutor.id = :tutorId AND s.status = com.upsilon.TCMP.enums.SessionStatus.PENDING ORDER BY s.startTime ASC")
+    List<Session> findPendingSessionsByTutorId(@Param("tutorId") Integer tutorId);
 }

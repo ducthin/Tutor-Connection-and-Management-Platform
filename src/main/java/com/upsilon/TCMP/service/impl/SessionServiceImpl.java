@@ -393,6 +393,14 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
+    public List<SessionDTO> findPendingSessionsByTutorId(Integer tutorId) {
+        return sessionRepository.findPendingSessionsByTutorId(tutorId)
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void confirmSession(Integer sessionId) {
         Session session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Session not found"));

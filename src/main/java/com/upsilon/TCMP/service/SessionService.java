@@ -42,6 +42,8 @@ public interface SessionService {
     
     List<SessionDTO> findCompletedSessionsByStudentId(Integer studentId);
     
+    List<SessionDTO> findPendingSessionsByTutorId(Integer tutorId);
+    
     // Status management
     void confirmSession(Integer sessionId);
     

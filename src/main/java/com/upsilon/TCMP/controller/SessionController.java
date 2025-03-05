@@ -67,9 +67,12 @@ public class SessionController {
         
         List<SessionDTO> upcomingSessions = sessionService.findUpcomingSessionsByTutorId(tutorDTO.getId());
         List<SessionDTO> completedSessions = sessionService.findCompletedSessionsByTutorId(tutorDTO.getId());
+        List<SessionDTO> pendingSessions = sessionService.findPendingSessionsByTutorId(tutorDTO.getId());
         
         model.addAttribute("upcomingSessions", upcomingSessions);
         model.addAttribute("completedSessions", completedSessions);
+        model.addAttribute("pendingSessions", pendingSessions);
+        model.addAttribute("sessions", upcomingSessions);
         
         return "tutor/sessions";
     }

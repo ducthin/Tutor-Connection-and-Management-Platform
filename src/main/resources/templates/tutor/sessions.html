@@ -30,6 +30,7 @@
                         <div>
                             <select id="statusFilter" class="form-select">
                                 <option value="">All Sessions</option>
+                                <option value="PENDING">Pending</option>
                                 <option value="UPCOMING">Upcoming</option>
                                 <option value="COMPLETED">Completed</option>
                                 <option value="CANCELLED">Cancelled</option>
@@ -37,6 +38,71 @@
                         </div>
                     </div>
 
+                    <!-- Pending Sessions Section -->
+                    <div class="mb-4" th:if="${not #lists.isEmpty(pendingSessions)}">
+                        <h3>Pending Sessions <span class="badge bg-warning" th:text="${#lists.size(pendingSessions)}"></span></h3>
+                        <div class="alert alert-warning">
+                            <i class="bi bi-info-circle-fill me-2"></i> Các buổi học đang chờ bạn xác nhận. Vui lòng xem xét và xác nhận hoặc hủy.
+                        </div>
+                        
+                        <div th:each="tutorSession : ${pendingSessions}" class="card session-card border-warning mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <h5 class="card-title" th:text="${tutorSession.subject != null ? tutorSession.subject.name : 'No Subject'}">Mathematics</h5>
+                                        <p class="card-text">
+                                            <strong>Student:</strong> 
+                                            <span th:text="${tutorSession.student.user.fullName}">John Doe</span>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p class="mb-1">
+                                            <i class="bi bi-calendar"></i>
+                                            <span th:text="${#temporals.format(tutorSession.startTime, 'dd MMM yyyy')}">
+                                                01 Jan 2025
+                                            </span>
+                                        </p>
+                                        <p class="mb-1">
+                                            <i class="bi bi-clock"></i>
+                                            <span th:text="${#temporals.format(tutorSession.startTime, 'HH:mm')} + ' - ' + 
+                                                        ${#temporals.format(tutorSession.endTime, 'HH:mm')}">
+                                                09:00 - 10:00
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <span class="badge bg-warning">PENDING</span>
+                                        <p class="mt-2" th:text="${#numbers.formatCurrency(tutorSession.price)}">$50.00</p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3" th:if="${tutorSession.notes}">
+                                    <hr>
+                                    <p class="card-text">
+                                        <strong>Notes:</strong>
+                                        <span th:text="${tutorSession.notes}">Session notes here...</span>
+                                    </p>
+                                </div>
+
+                                <div class="mt-3">
+                                    <hr>
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <form th:action="@{/sessions/{id}/cancel(id=${tutorSession.id})}" method="post" style="display: inline;">
+                                            <input type="hidden" name="reason" value="Tutor không thể dạy vào thời gian này">
+                                            <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                    th:onclick="'cancelSession(' + ${tutorSession.id} + ')'">
+                                                Từ chối
+                                            </button>
+                                        </form>
+                                        <form th:action="@{/sessions/{id}/confirm(id=${tutorSession.id})}" method="post" style="display: inline;">
+                                            <button type="submit" class="btn btn-success btn-sm">Xác nhận</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Sessions List -->
                     <div class="sessions-section">
                         <div th:if="${#lists.isEmpty(sessions)}" class="text-center p-5">
@@ -50,7 +116,7 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-4">
-                                        <h5 class="card-title" th:text="${tutorSession.subject.name}">Mathematics</h5>
+                                        <h5 class="card-title" th:text="${tutorSession.subject != null ? tutorSession.subject.name : 'No Subject'}">Mathematics</h5>
                                         <p class="card-text">
                                             <strong>Student:</strong> 
                                             <span th:text="${tutorSession.student.user.fullName}">John Doe</span>

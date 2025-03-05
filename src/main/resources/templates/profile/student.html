@@ -86,8 +86,8 @@
                                     <thead>
                                         <tr>
                                             <th>Date</th>
-                                            <th>Tutor</th>
                                             <th>Subject</th>
+                                            <th>Tutor</th>
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
@@ -95,7 +95,7 @@
                                     <tbody>
                                         <tr th:each="tutorSession : ${student.sessions}">
                                             <td th:text="${#temporals.format(tutorSession.startTime, 'dd MMM yyyy, HH:mm')}">01/01/2025, 09:00</td>
-                                            <td th:text="${tutorSession.subject.name}">Mathematics</td>
+                                            <td th:text="${tutorSession.subject != null ? tutorSession.subject.name : 'No Subject'}">Mathematics</td>
                                             <td th:text="${tutorSession.tutor.user.fullName}">John Smith</td>
                                             <td th:text="${tutorSession.status}">COMPLETED</td>
                                             <td>
