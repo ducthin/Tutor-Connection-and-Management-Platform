@@ -104,6 +104,7 @@ public class SecurityConfig {
                     .requestMatchers("/tutor/**").hasAuthority("ROLE_TUTOR")
                     .requestMatchers("/student/**").hasAuthority("ROLE_STUDENT")
                     .requestMatchers("/tutors", "/tutors/search", "/tutors/results", "/tutors/available", "/subjects").permitAll()
+                    .requestMatchers("/tutors/profile/**", "/tutors/redirect-profile/**").permitAll()
                     .requestMatchers("/tutors/favorites/**").hasAuthority("ROLE_STUDENT")
                     .requestMatchers("/api/tutors/**").permitAll()
                     .anyRequest().authenticated()

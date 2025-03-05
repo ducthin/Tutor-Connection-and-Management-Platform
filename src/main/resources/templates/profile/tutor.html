@@ -21,29 +21,29 @@
                     </div>
 
                     <!-- Basic Information -->
-                    <div class="card mb-4">
+                    <div class="card mb-4" th:if="${tutor != null}">
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-3 text-center mb-3">
                                     <div class="profile-picture-container">
-                                        <img th:if="${tutor.user.profilePictureUrl}"
+                                        <img th:if="${tutor != null and tutor.user != null and tutor.user.profilePictureUrl != null}"
                                              th:src="${tutor.user.profilePictureUrl}"
                                              class="img-fluid rounded-circle"
                                              alt="Profile Picture"
                                              style="width: 200px; height: 200px; object-fit: cover;">
-                                        <div th:unless="${tutor.user.profilePictureUrl}"
+                                        <div th:unless="${tutor != null and tutor.user != null and tutor.user.profilePictureUrl != null}"
                                              class="rounded-circle bg-light d-flex align-items-center justify-content-center"
                                              style="width: 200px; height: 200px;">
                                             <i class="bi bi-person-fill" style="font-size: 100px;"></i>
                                         </div>
                                     </div>
                                     <br>
-                                    <a href="/profile/edit" class="btn btn-primary">Edit Profile</a>
+                                    <a th:if="${isTutorProfile != null and isTutorProfile}" href="/profile/edit" class="btn btn-primary">Edit Profile</a>
                                 </div>
                                 <div class="col-md-9">
                                     <div class="d-flex justify-content-between align-items-start mb-3">
                                         <div>
-                                            <h3 class="mb-0" th:text="${tutor.user.fullName}">John Doe</h3>
+                                            <h3 class="mb-0" th:text="${tutor != null and tutor.user != null ? tutor.user.fullName : 'Unknown Tutor'}">John Doe</h3>
                                             <div class="d-flex align-items-center mt-2">
                                                 <!-- Action Buttons -->
                                                 <div th:if="${isTutorProfile != null and !isTutorProfile}" class="d-flex align-items-center">
@@ -52,12 +52,12 @@
                                                         Book Session
                                                     </a>
                                                     <!-- Favorite Button -->
-                                                    <form th:if="${!isInFavorites}" th:action="@{/tutors/favorites/{id}(id=${tutor.id})}" method="post" class="me-3">
+                                                    <form th:if="${isInFavorites != null and !isInFavorites}" th:action="@{/tutors/favorites/{id}(id=${tutor.id})}" method="post" class="me-3">
                                                         <button type="submit" class="btn btn-outline-danger">
                                                             <i class="bi bi-heart"></i> Add to Favorites
                                                         </button>
                                                     </form>
-                                                    <form th:if="${isInFavorites}" th:action="@{/tutors/favorites/{id}/remove(id=${tutor.id})}" method="post" class="me-3">
+                                                    <form th:if="${isInFavorites != null and isInFavorites}" th:action="@{/tutors/favorites/{id}/remove(id=${tutor.id})}" method="post" class="me-3">
                                                         <button type="submit" class="btn btn-danger">
                                                             <i class="bi bi-heart-fill"></i> Remove from Favorites
                                                         </button>
@@ -82,8 +82,8 @@
                                                 <i class="bi bi-patch-check-fill text-primary me-2"></i>
                                                 <div>
                                                     <small class="text-muted">Status</small>
-                                                    <div th:if="${tutor.isVerified}" class="text-success">Verified Tutor</div>
-                                                    <div th:unless="${tutor.isVerified}" class="text-muted">Pending Verification</div>
+                                                    <div th:if="${tutor != null and tutor.isVerified}" class="text-success">Verified Tutor</div>
+                                                    <div th:unless="${tutor != null and tutor.isVerified}" class="text-muted">Pending Verification</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -92,7 +92,7 @@
                                                 <i class="bi bi-calendar-check me-2"></i>
                                                 <div>
                                                     <small class="text-muted">Total Sessions</small>
-                                                    <div th:text="${tutor.totalSessions ?: '0'} + ' sessions'">0 sessions</div>
+                                                    <div th:text="${tutor != null and tutor.totalSessions != null ? tutor.totalSessions : '0'} + ' sessions'">0 sessions</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -101,8 +101,8 @@
                                                 <i class="bi bi-currency-dollar me-2"></i>
                                                 <div>
                                                     <small class="text-muted">Starting from</small>
-                                                    <div th:if="${tutor.hourlyRate}" th:text="'$' + ${#numbers.formatDecimal(tutor.hourlyRate, 1, 2)} + '/hr'">$50.00/hr</div>
-                                                    <div th:unless="${tutor.hourlyRate}">Rate varies</div>
+                                                    <div th:if="${tutor != null and tutor.hourlyRate != null}" th:text="'$' + ${#numbers.formatDecimal(tutor.hourlyRate, 1, 2)} + '/hr'">$50.00/hr</div>
+                                                    <div th:unless="${tutor != null and tutor.hourlyRate != null}">Rate varies</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -113,23 +113,23 @@
                     </div>
 
                     <!-- Professional Information -->
-                    <div class="card mb-4">
+                    <div class="card mb-4" th:if="${tutor != null}">
                         <div class="card-body">
                             <h5 class="card-title">About</h5>
                             <div class="row">
                                 <div class="col-md-12">
                                     <h6>Bio</h6>
-                                    <p th:text="${tutor.bio}">No bio available</p>
+                                    <p th:text="${tutor != null and tutor.bio != null ? tutor.bio : 'No bio available'}">No bio available</p>
                                     
                                     <h6>Qualifications</h6>
-                                    <p th:text="${tutor.qualifications}">No qualifications information available</p>
+                                    <p th:text="${tutor != null and tutor.qualifications != null ? tutor.qualifications : 'No qualifications information available'}">No qualifications information available</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Teaching Subjects -->
-                    <div class="card mb-4">
+                    <div class="card mb-4" th:if="${tutor != null}">
                         <div class="card-body">
                             <h5 class="card-title">Teaching Subjects</h5>
                             <div class="table-responsive">
@@ -157,7 +157,7 @@
                     </div>
 
                     <!-- Availability -->
-                    <div class="card mb-4">
+                    <div class="card mb-4" th:if="${tutor != null}">
                         <div class="card-body">
                             <h5 class="card-title">Availability</h5>
                             <div class="table-responsive">
@@ -185,7 +185,7 @@
                     </div>
 
                     <!-- Reviews -->
-                    <div class="card mb-4">
+                    <div class="card mb-4" th:if="${tutor != null}">
                         <div class="card-body">
                             <h5 class="card-title">Recent Reviews</h5>
                             <div th:each="review : ${recentReviews}" class="review mb-3">
@@ -200,7 +200,7 @@
                                 </div>
                                 <p class="mt-2" th:text="${review.comment}">Review comment here</p>
                             </div>
-                            <div th:if="${#lists.isEmpty(recentReviews)}" class="text-center">
+                            <div th:if="${recentReviews == null || #lists.isEmpty(recentReviews)}" class="text-center">
                                 <p>No reviews yet</p>
                             </div>
                         </div>

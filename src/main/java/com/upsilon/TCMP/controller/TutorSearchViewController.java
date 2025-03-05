@@ -175,7 +175,7 @@ public class TutorSearchViewController {
         return "redirect:/tutors/favorites";
     }
 
-    @GetMapping("/profile/{tutorId}")
+    @GetMapping("/search-view-profile/{tutorId}")
     public String viewTutorProfile(@PathVariable Integer tutorId, Authentication auth, Model model) {
         try {
             log.info("Attempting to fetch tutor profile with ID: {}", tutorId);
@@ -236,6 +236,15 @@ public class TutorSearchViewController {
             model.addAttribute("isInFavorites", false);
             return "profile/tutor";
         }
+    }
+
+    /**
+     * Chuyển hướng từ URL cũ (/profile) sang URL mới (/view-profile) 
+     * để đảm bảo các liên kết cũ vẫn hoạt động
+     */
+    @GetMapping("/profile-redirect/{tutorId}")
+    public String redirectFromOldProfile(@PathVariable Integer tutorId) {
+        return "redirect:/tutors/profile/" + tutorId;
     }
 
     private Integer getStudentIdFromAuth(Authentication auth) {
