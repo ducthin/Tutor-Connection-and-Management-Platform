@@ -14,14 +14,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(@NonNull ViewControllerRegistry registry) {
-        System.out.println("=== Configuring View Controllers ===");
+        log.info("=== Configuring View Controllers ===");
         
         // Home pages
         registry.addViewController("/").setViewName("home");
         registry.addViewController("/home").setViewName("home");
         registry.addViewController("/index").setViewName("home");
         
-        System.out.println("Home page mappings configured");
+        log.info("Home page mappings configured");
         
         // Authentication pages
         registry.addViewController("/login").setViewName("auth/login");

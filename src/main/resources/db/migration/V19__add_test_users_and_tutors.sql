@@ -1,4 +1,4 @@
--- Insert test users
+-- Consider using a variable or making this more concise for test data
 INSERT INTO Users (email, password, full_name, role, is_active, is_email_verified)
 VALUES 
 ('tutor1@test.com', '$2a$10$xn3LI/AjqicFYZFruSwve.268MC7.JCIfxJ6AJt2J2I3wgglPBkvS', 'Test Tutor 1', 'ROLE_TUTOR', true, true),

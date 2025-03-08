@@ -57,7 +57,7 @@
 
                                 <div class="mb-3">
                                     <label for="phoneNumber" class="form-label">Phone Number</label>
-                                    <input type="text" class="form-control" id="phoneNumber" th:field="*{phoneNumber}"
+                                    <input type="tel" class="form-control" id="phoneNumber" th:field="*{phoneNumber}"
                                            th:classappend="${#fields.hasErrors('phoneNumber')} ? 'is-invalid'">
                                     <div class="invalid-feedback" th:if="${#fields.hasErrors('phoneNumber')}"
                                          th:errors="*{phoneNumber}">Phone number error</div>
