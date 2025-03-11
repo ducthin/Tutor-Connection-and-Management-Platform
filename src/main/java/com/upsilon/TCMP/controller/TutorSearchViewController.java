@@ -45,27 +45,6 @@ public class TutorSearchViewController {
         model.addAttribute("sortBy", sortBy);
     }
 
-    @GetMapping
-    public String index(Model model) {
-        try {
-            log.info("=== Tutor Index Page Access ===");
-            log.info("Request received at /tutors");
-            
-            // Add test data to model
-            model.addAttribute("testMessage", "Test message for template resolution debugging");
-            model.addAttribute("timestamp", java.time.LocalDateTime.now());
-            
-            log.info("Added attributes to model");
-            log.info("Attempting to resolve view: tutor/index");
-            
-            return "tutor/index";
-            
-        } catch (Exception e) {
-            log.error("Error in tutor index page: {}", e.getMessage(), e);
-            throw e;
-        }
-    }
-
     @GetMapping("/search")
     public String searchPage(Model model) {
         List<SubjectDTO> subjects = subjectService.getAllSubjects();

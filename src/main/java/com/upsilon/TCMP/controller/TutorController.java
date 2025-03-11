@@ -31,32 +31,6 @@ private UserService userService;
 @Autowired
 private SubjectService subjectService;
 
-
-@GetMapping("/profile")
-public String viewProfile(Authentication auth, Model model) {
-    try {
-        UserDTO user = userService.getUserByEmail(auth.getName());
-        TutorDTO tutor = tutorService.getTutorByUserId(user.getId());
-        
-        List<TutorSubjectDTO> tutorSubjects = tutorService.getTutorSubjects(tutor.getId());
-        List<TutorAvailabilityDTO> availability = tutorService.getTutorAvailability(tutor.getId());
-        List<ReviewDTO> recentReviews = tutorService.getRecentTutorReviews(tutor.getId(), 5);
-        Double averageRating = tutorService.getAverageRating(tutor.getId());
-        
-        model.addAttribute("tutor", tutor);
-        model.addAttribute("user", user);
-        model.addAttribute("tutorSubjects", tutorSubjects);
-        model.addAttribute("availability", availability);
-        model.addAttribute("recentReviews", recentReviews);
-        model.addAttribute("averageRating", averageRating);
-        
-        return "profile/tutor";
-    } catch (Exception e) {
-        model.addAttribute("error", "Failed to load profile: " + e.getMessage());
-        return "redirect:/dashboard";
-    }
-}
-
 @GetMapping("/subjects")
 public String subjects(Authentication auth, Model model) {
     try {

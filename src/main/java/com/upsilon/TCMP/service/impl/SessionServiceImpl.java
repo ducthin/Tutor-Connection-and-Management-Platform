@@ -49,10 +49,6 @@ public class SessionServiceImpl implements SessionService {
         if (sessionDTO.getStartTime().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Không thể đặt lịch cho thời gian trong quá khứ. Vui lòng chọn ngày và giờ trong tương lai.");
         }
-
-        // Get tutor's availability
-        List<TutorAvailabilityDTO> availabilityList = tutorService.getTutorAvailability(sessionDTO.getTutor().getId());
-        
         // Không còn kiểm tra lịch rảnh của gia sư, thay vào đó chỉ ghi log thông tin
         StringBuilder debugInfo = new StringBuilder();
         debugInfo.append("Thông tin chi tiết:\n");
