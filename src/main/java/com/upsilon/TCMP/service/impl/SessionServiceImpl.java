@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.Duration;
-import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -21,7 +20,6 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Locale;
-import java.math.BigDecimal;
 
 @Service
 @Transactional
@@ -55,69 +53,31 @@ public class SessionServiceImpl implements SessionService {
         // Get tutor's availability
         List<TutorAvailabilityDTO> availabilityList = tutorService.getTutorAvailability(sessionDTO.getTutor().getId());
         
-        if (availabilityList.isEmpty()) {
-            throw new IllegalArgumentException("Gia sư này chưa thiết lập thời gian rảnh. Vui lòng liên hệ với gia sư để cập nhật lịch.");
-        }
-
-        // Check if requested time falls within tutor's availability
-        boolean isTimeAvailable = false;
+        // Không còn kiểm tra lịch rảnh của gia sư, thay vào đó chỉ ghi log thông tin
+        StringBuilder debugInfo = new StringBuilder();
+        debugInfo.append("Thông tin chi tiết:\n");
+        
         java.time.DayOfWeek javaDayOfWeek = sessionDTO.getStartTime().getDayOfWeek();
-        // Chuyển đổi từ java.time.DayOfWeek sang enum DayOfWeek của ứng dụng
         com.upsilon.TCMP.enums.DayOfWeek sessionDay = mapJavaDayOfWeekToAppDayOfWeek(javaDayOfWeek);
         
         LocalTime requestedStartTime = sessionDTO.getStartTime().toLocalTime();
         LocalTime requestedEndTime = sessionDTO.getEndTime().toLocalTime();
         
-        StringBuilder debugInfo = new StringBuilder();
-        debugInfo.append("Thông tin chi tiết:\n");
         debugInfo.append("Thời gian yêu cầu: ").append(javaDayOfWeek).append(" (").append(sessionDay).append(")\n");
         debugInfo.append("Giờ bắt đầu: ").append(requestedStartTime).append(" (").append(requestedStartTime.format(DateTimeFormatter.ofPattern("h:mm a"))).append(")\n");
         debugInfo.append("Giờ kết thúc: ").append(requestedEndTime).append(" (").append(requestedEndTime.format(DateTimeFormatter.ofPattern("h:mm a"))).append(")\n");
         debugInfo.append("Ngày và giờ đầy đủ: ").append(sessionDTO.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))).append(" đến ").append(sessionDTO.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))).append("\n\n");
         
-        debugInfo.append("Thời gian rảnh của gia sư:\n");
+        // Kiểm tra thời gian học hợp lý (ít nhất 30 phút, không quá 4 giờ)
+        Duration duration = Duration.between(requestedStartTime, requestedEndTime);
+        long minutes = duration.toMinutes();
         
-        for (TutorAvailabilityDTO availability : availabilityList) {
-            debugInfo.append("\n- ").append(availability.getDayOfWeek()).append(":\n");
-            debugInfo.append("  Giờ bắt đầu: ").append(availability.getStartTime()).append(" (").append(availability.getStartTime().format(DateTimeFormatter.ofPattern("h:mm a"))).append(")\n");
-            debugInfo.append("  Giờ kết thúc: ").append(availability.getEndTime()).append(" (").append(availability.getEndTime().format(DateTimeFormatter.ofPattern("h:mm a"))).append(")\n");
-            
-            // In thông tin chi tiết để so sánh
-            debugInfo.append("\n  So sánh giờ:\n");
-            debugInfo.append("  - So sánh ngày: [").append(sessionDay).append("] với [").append(availability.getDayOfWeek()).append("]\n");
-            debugInfo.append("  - Giá trị enum ngày: [").append(sessionDay.name()).append("] với [").append(availability.getDayOfWeek().name()).append("]\n");
-            debugInfo.append("  - So sánh giờ bắt đầu: [").append(requestedStartTime).append("] với [").append(availability.getStartTime()).append("]\n");
-            debugInfo.append("  - So sánh giờ kết thúc: [").append(requestedEndTime).append("] với [").append(availability.getEndTime()).append("]\n");
-            
-            // Kiểm tra nếu ngày trong tuần khớp
-            boolean dayMatches = availability.getDayOfWeek() == sessionDay;
-            
-            // Kiểm tra nếu thời gian bắt đầu và kết thúc nằm trong khoảng khả dụng
-            boolean startTimeInRange = !requestedStartTime.isBefore(availability.getStartTime());
-            boolean endTimeInRange = !requestedEndTime.isAfter(availability.getEndTime());
-            boolean timeInRange = startTimeInRange && endTimeInRange;
-            
-            // So sánh chi tiết để gỡ lỗi
-            debugInfo.append("\n  Kết quả chi tiết:\n");
-            debugInfo.append("  - Ngày khớp: ").append(dayMatches).append("\n");
-            debugInfo.append("  - Thời gian bắt đầu hợp lệ: ").append(startTimeInRange).append("\n");
-            debugInfo.append("    (").append(requestedStartTime).append(" >= ").append(availability.getStartTime()).append(")\n");
-            debugInfo.append("  - Thời gian kết thúc hợp lệ: ").append(endTimeInRange).append("\n");
-            debugInfo.append("    (").append(requestedEndTime).append(" <= ").append(availability.getEndTime()).append(")\n");
-            debugInfo.append("  - Toàn bộ thời gian hợp lệ: ").append(timeInRange).append("\n");
-            
-            if (dayMatches && timeInRange) {
-                isTimeAvailable = true;
-                debugInfo.append("\n  => ĐÃ TÌM THẤY KHUNG GIỜ PHÙ HỢP!\n");
-                break;
-            } else {
-                debugInfo.append("\n  => Khung giờ này không phù hợp.\n");
-            }
+        if (minutes < 30) {
+            throw new IllegalArgumentException("Thời gian học phải kéo dài ít nhất 30 phút.");
         }
-
-        if (!isTimeAvailable) {
-            throw new IllegalArgumentException("Khung giờ đã chọn không nằm trong thời gian rảnh của gia sư. Vui lòng kiểm tra lại lịch rảnh của gia sư và chọn khung giờ phù hợp.\n\n" + 
-                                               "======= THÔNG TIN GỠ LỖI CHI TIẾT =======\n" + debugInfo.toString());
+        
+        if (minutes > 240) { // 4 giờ
+            throw new IllegalArgumentException("Thời gian học không được vượt quá 4 giờ.");
         }
 
         // Check for overlapping sessions
@@ -188,10 +148,10 @@ public class SessionServiceImpl implements SessionService {
                 throw new IllegalArgumentException("Gia sư không dạy môn học này");
             }
 
-            // Duration in hours (for now, just a fixed 1-hour session)
-            // In the future, could calculate based on start and end times
-            double duration = 1.0;
-            double price = tutorSubject.getHourlyRate() * duration;
+            // Calculate duration in hours based on start and end times
+            Duration duration = Duration.between(startDateTime, endDateTime);
+            double durationHours = duration.toMinutes() / 60.0;
+            double price = tutorSubject.getHourlyRate() * durationHours;
 
             // Validate time slot
             validateTimeSlot(sessionDTO);
@@ -242,16 +202,31 @@ public class SessionServiceImpl implements SessionService {
         // Xử lý nhiều định dạng thời gian
         LocalTime localTime;
         try {
+            // Chuẩn hóa chuỗi thời gian
+            time = time.trim();
+            
             // Thử với nhiều định dạng khác nhau
-            if (time.contains("AM") || time.contains("PM") || time.contains("am") || time.contains("pm")) {
+            if (time.matches("(?i).*[ap]m.*")) {  // Kiểm tra có chứa am/pm không (case insensitive)
                 // Định dạng 12 giờ (9:00 AM, 1:30 PM)
                 debugInfo.append("- Thử phân tích với định dạng 12 giờ (h:mm a)\n");
-                localTime = LocalTime.parse(time, DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH));
+                // Chuẩn hóa AM/PM
+                time = time.replaceAll("(?i)a\\.m\\.", "AM").replaceAll("(?i)p\\.m\\.", "PM");
+                time = time.replaceAll("(?i)am", "AM").replaceAll("(?i)pm", "PM");
+                try {
+                    localTime = LocalTime.parse(time, DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH));
+                } catch (Exception e) {
+                    // Thử với định dạng khác
+                    localTime = LocalTime.parse(time, DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH));
+                }
             } else if (time.contains("T")) {
                 // Định dạng ISO (T09:00:00)
                 debugInfo.append("- Thử phân tích với định dạng ISO\n");
                 String cleanTime = time.substring(time.indexOf('T') + 1);
-                localTime = LocalTime.parse(cleanTime);
+                if (cleanTime.length() <= 5) {
+                    localTime = LocalTime.parse(cleanTime, DateTimeFormatter.ofPattern("HH:mm"));
+                } else {
+                    localTime = LocalTime.parse(cleanTime);
+                }
             } else if (time.contains(":")) {
                 // Định dạng 24 giờ (09:00, 13:30)
                 debugInfo.append("- Thử phân tích với định dạng 24 giờ (HH:mm)\n");
@@ -270,18 +245,19 @@ public class SessionServiceImpl implements SessionService {
             debugInfo.append("- Đã phân tích thành công giờ: ").append(localTime).append("\n");
         } catch (Exception e) {
             debugInfo.append("- Lỗi phân tích giờ: ").append(e.getMessage()).append("\n");
-            throw new DateTimeParseException("Không thể phân tích giờ: " + time, time, 0, e);
+            throw new DateTimeParseException("Không thể phân tích giờ: " + time + ". Vui lòng sử dụng định dạng HH:MM hoặc HH:MM AM/PM", time, 0, e);
         }
         
         // Phân tích ngày
         LocalDate localDate;
         try {
             debugInfo.append("- Phân tích ngày theo định dạng ISO (yyyy-MM-dd)\n");
+            date = date.trim();
             localDate = LocalDate.parse(date);
             debugInfo.append("- Đã phân tích thành công ngày: ").append(localDate).append("\n");
         } catch (Exception e) {
             debugInfo.append("- Lỗi phân tích ngày: ").append(e.getMessage()).append("\n");
-            throw new DateTimeParseException("Không thể phân tích ngày: " + date, date, 0, e);
+            throw new DateTimeParseException("Không thể phân tích ngày: " + date + ". Vui lòng sử dụng định dạng YYYY-MM-DD", date, 0, e);
         }
         
         // Kết hợp ngày và giờ

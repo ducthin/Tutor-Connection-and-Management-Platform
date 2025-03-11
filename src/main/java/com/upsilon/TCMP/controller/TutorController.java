@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.ArrayList;
 
 @Controller
 @RequestMapping("/tutor")
@@ -248,15 +249,37 @@ public String showAddNewSubjectForm(Authentication auth, Model model) {
        }
    }
 
-   @GetMapping("/sessions")
+   @GetMapping("/sessions-overview")
    public String sessions(Authentication auth, Model model) {
        try {
            UserDTO user = userService.getUserByEmail(auth.getName());
            TutorDTO tutor = tutorService.getTutorByUserId(user.getId());
-           List<SessionDTO> sessions = tutorService.getTutorSessions(tutor.getId());
            
+           // Get all sessions with proper categorization
+           List<SessionDTO> allSessions = tutorService.getTutorSessions(tutor.getId());
+           List<SessionDTO> upcomingSessions = tutorService.getTutorUpcomingSessions(tutor.getId());
+           List<SessionDTO> pendingSessions = new ArrayList<>();
+           List<SessionDTO> completedSessions = new ArrayList<>();
+           
+           // Filter sessions by status
+           for (SessionDTO session : allSessions) {
+               if (session.getStatus() != null) {
+                   if (session.getStatus().equals("PENDING")) {
+                       pendingSessions.add(session);
+                   } else if (session.getStatus().equals("COMPLETED")) {
+                       completedSessions.add(session);
+                   }
+               }
+           }
+           
+           // Add all required attributes to the model
            model.addAttribute("tutor", tutor);
-           model.addAttribute("sessions", sessions);
+           model.addAttribute("sessions", upcomingSessions); // Use upcoming sessions as default view
+           model.addAttribute("upcomingSessions", upcomingSessions);
+           model.addAttribute("pendingSessions", pendingSessions);
+           model.addAttribute("completedSessions", completedSessions);
+           model.addAttribute("allSessions", upcomingSessions);
+           
            return "tutor/sessions";
        } catch (Exception e) {
            model.addAttribute("error", e.getMessage());
@@ -339,8 +362,7 @@ public String showAddNewSubjectForm(Authentication auth, Model model) {
             @PathVariable("id") Integer availabilityId,
             Model model) {
         try {
-            UserDTO user = userService.getUserByEmail(auth.getName());
-            TutorDTO tutor = tutorService.getTutorByUserId(user.getId());
+            // No need to get the user data since we're just removing availability
             tutorService.removeAvailability(availabilityId);
             return "redirect:/tutor/availability";
         } catch (Exception e) {

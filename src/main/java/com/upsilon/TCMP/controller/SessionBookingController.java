@@ -59,9 +59,12 @@ public class SessionBookingController {
         // Get tutor's availability
         List<TutorAvailabilityDTO> originalAvailability = tutorService.getTutorAvailability(tutorId);
         if (originalAvailability.isEmpty()) {
-            model.addAttribute("error", "Gia sư này chưa thiết lập thời gian rảnh. Vui lòng yêu cầu họ cập nhật lịch trước khi đặt buổi học.");
+            // Không còn yêu cầu gia sư phải có lịch rảnh, chỉ hiển thị thông báo
+            model.addAttribute("warning", "Gia sư này chưa thiết lập thời gian rảnh. Bạn vẫn có thể đề xuất thời gian học phù hợp với mình.");
             model.addAttribute("tutor", tutor);
             model.addAttribute("tutorSubjects", tutorSubjects);
+            // Tạo danh sách rỗng để tránh lỗi
+            model.addAttribute("availability", new ArrayList<FormattedAvailabilityDTO>());
             return "tutor/book-session";
         }
 
@@ -122,7 +125,8 @@ public class SessionBookingController {
             @RequestParam("tutorId") Integer tutorId,
             @RequestParam("subjectId") Integer subjectId,
             @RequestParam("sessionDate") String sessionDate,
-            @RequestParam("timeSelection") String timeSelection,
+            @RequestParam("startTime") String startTime,
+            @RequestParam("endTime") String endTime,
             @RequestParam(value = "notes", required = false) String notes,
             Authentication auth,
             Model model,
@@ -136,18 +140,11 @@ public class SessionBookingController {
             StringBuilder debugInfo = new StringBuilder();
             debugInfo.append("=== THÔNG TIN ĐẶT LỊCH ===\n");
             debugInfo.append("- Ngày: ").append(sessionDate).append("\n");
-            debugInfo.append("- Thời gian đã chọn: ").append(timeSelection).append("\n");
+            debugInfo.append("- Giờ bắt đầu: ").append(startTime).append("\n");
+            debugInfo.append("- Giờ kết thúc: ").append(endTime).append("\n");
             
-            // Parse time selection
-            String[] times = timeSelection.split(",");
-            if (times.length != 2) {
-                throw new IllegalArgumentException("Lựa chọn thời gian không hợp lệ: " + timeSelection);
-            }
-            
-            String startTime = times[0].trim();
-            String endTime = times[1].trim();
-            
-            debugInfo.append("- Tách thời gian: startTime=[").append(startTime).append("], endTime=[").append(endTime).append("]\n");
+            // Chuẩn hóa định dạng thời gian
+            debugInfo.append("- Thời gian trước khi chuẩn hóa: startTime=[" + startTime + "], endTime=[" + endTime + "]\n");
             
             // Loại bỏ T nếu có
             if (startTime.contains("T")) {
@@ -157,6 +154,19 @@ public class SessionBookingController {
             if (endTime.contains("T")) {
                 endTime = endTime.substring(endTime.indexOf("T") + 1);
             }
+            
+            // Đảm bảo định dạng thời gian đúng (HH:MM)
+            if (startTime.length() <= 5 && !startTime.contains(":")) {
+                // Nếu chỉ có giờ, thêm phút
+                startTime = startTime + ":00";
+            }
+            
+            if (endTime.length() <= 5 && !endTime.contains(":")) {
+                // Nếu chỉ có giờ, thêm phút
+                endTime = endTime + ":00";
+            }
+            
+            debugInfo.append("- Thời gian sau khi chuẩn hóa: startTime=[" + startTime + "], endTime=[" + endTime + "]\n");
             
             debugInfo.append("- Sau khi xử lý T: startTime=[").append(startTime).append("], endTime=[").append(endTime).append("]\n");
             

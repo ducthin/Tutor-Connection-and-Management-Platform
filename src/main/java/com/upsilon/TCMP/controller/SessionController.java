@@ -107,7 +107,7 @@ public class SessionController {
         try {
             UserDTO userDTO = userService.getUserByEmail(auth.getName());
             // Xác thực xem người dùng có quyền hủy buổi học hay không
-            SessionDTO sessionDTO = sessionService.getSessionById(sessionId);
+            // Commented out unused variable: sessionService.getSessionById(sessionId);
             
             // Thực hiện hủy buổi học
             sessionService.cancelSession(sessionId, reason);

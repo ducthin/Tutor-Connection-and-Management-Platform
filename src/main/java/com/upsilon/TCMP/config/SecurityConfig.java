@@ -14,6 +14,7 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -34,17 +35,10 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Primary // Ensure this is the primary PasswordEncoder used throughout the application
+    @Primary
     public PasswordEncoder passwordEncoder() {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(10);
         logger.debug("Created BCryptPasswordEncoder with strength 10");
-        
-        // Test the encoder
-        String testPassword = "admin123";
-        String testHash = "$2a$10$FvHQqZRtIGsXvUCQn39XmeqyX56WeuIJhgGU0v5tf74ICcSoOPqYi";
-        boolean matches = encoder.matches(testPassword, testHash);
-        logger.debug("Test password verification result: {}", matches);
-        
         return encoder;
     }
 
@@ -62,15 +56,17 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService);
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService);
+        return filter;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomAuthenticationProvider authProvider) throws Exception {
+
         http
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/**")  // Disable CSRF for API endpoints
-                .ignoringRequestMatchers("/test/**") // Disable for test endpoints
+                .ignoringRequestMatchers("/api/**")
+                .ignoringRequestMatchers("/test/**")
             )
             .authorizeHttpRequests(authorize ->
                 authorize
@@ -96,7 +92,7 @@ public class SecurityConfig {
                         "/reset-password",
                         "/api/auth/**",
                         "/api/public/**",
-                        "/test/**",  // Allow access to all test endpoints
+                        "/test/**",
                         "/error"
                     ).permitAll()
                     .requestMatchers("/dashboard/**").authenticated()
@@ -132,7 +128,8 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             )
-            .authenticationProvider(authProvider);
+            .authenticationProvider(authProvider)
+            .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

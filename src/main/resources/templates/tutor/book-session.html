@@ -117,14 +117,14 @@
                 <!-- No Availability Warning -->
                 <div th:if="${#lists.isEmpty(availability)}" class="alert alert-warning">
                     <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    Không tìm thấy khung giờ rảnh. Vui lòng liên hệ với gia sư để thiết lập lịch rảnh.
+                    Gia sư này chưa thiết lập thời gian rảnh. Bạn vẫn có thể đề xuất thời gian học phù hợp với mình.
                 </div>
 
                 <!-- Tutor Availability Summary -->
-                <div class="tutor-availability-summary mb-4">
-                    <h5 class="mb-3">Lịch dạy của gia sư</h5>
+                <div class="tutor-availability-summary mb-4" th:if="${not #lists.isEmpty(availability)}">
+                    <h5 class="mb-3">Lịch tham khảo của gia sư</h5>
                     <div class="alert alert-info">
-                        <p>Gia sư này sẵn sàng dạy vào các khung giờ sau:</p>
+                        <p>Gia sư này thường có thể dạy vào các khung giờ sau:</p>
                         <div class="table-responsive">
                             <table class="table table-bordered table-hover">
                                 <thead>
@@ -153,13 +153,13 @@
                         </div>
                         <p class="mb-0 mt-2">
                             <i class="bi bi-info-circle-fill me-1"></i>
-                            <small>Lưu ý: Bạn chỉ có thể đặt lịch học trong các khung giờ trên. Vui lòng chọn ngày và giờ phù hợp.</small>
+                            <small>Bạn có thể đề xuất thời gian học phù hợp với lịch của mình. Gia sư sẽ xem xét và xác nhận buổi học nếu thời gian phù hợp.</small>
                         </p>
                     </div>
                 </div>
 
                 <!-- Booking Form -->
-                <form th:if="${not #lists.isEmpty(availability)}" th:action="@{/book/session}" method="post">
+                <form th:action="@{/book/session}" method="post">
                     <input type="hidden" name="tutorId" th:value="${tutor.id}">
                     
                     <!-- Subject Selection -->
@@ -199,59 +199,23 @@
                                    required>
                         </div>
 
-                        <!-- Time Slots -->
+                        <!-- Time Selection -->
                         <div class="mb-4">
-                            <label class="form-label">Khung giờ có sẵn</label>
-                            <div class="time-slots">
-                                <th:block th:each="slot : ${availability}">
-                                    <div class="form-check">
-                                        <input type="radio" 
-                                               class="form-check-input" 
-                                               name="timeSelection" 
-                                               th:id="'slot-' + ${slot.id}"
-                                               th:value="${slot.startTime + ',' + slot.endTime}"
-                                               th:data-day="${slot.dayOfWeek.name()}"
-                                               required>
-                                        <label class="form-check-label time-slot-btn" 
-                                               th:for="'slot-' + ${slot.id}"
-                                               th:text="${slot.startTime + ' - ' + slot.endTime}">
-                                            9:00 AM - 10:00 AM
-                                        </label>
-                                    </div>
-                                </th:block>
+                            <label class="form-label">Chọn thời gian học</label>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="startTime" class="form-label">Giờ bắt đầu</label>
+                                    <input type="time" class="form-control" id="startTime" name="startTime" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="endTime" class="form-label">Giờ kết thúc</label>
+                                    <input type="time" class="form-control" id="endTime" name="endTime" required>
+                                </div>
                             </div>
                             
-                            <!-- Debug Information -->
-                            <div class="mt-3 mb-3 p-3 border rounded bg-light">
-                                <h6>Thông tin khung giờ đã chọn:</h6>
-                                <div id="slot-debug-info">
-                                    <p class="text-muted">Chưa có khung giờ nào được chọn</p>
-                                </div>
-                                
-                                <!-- Thêm thông tin gỡ lỗi về lịch rảnh -->
-                                <div class="mt-3">
-                                    <h6>Danh sách lịch rảnh gốc của gia sư:</h6>
-                                    <div>
-                                        <table class="table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>Ngày</th>
-                                                    <th>Start Time</th>
-                                                    <th>End Time</th>
-                                                    <th>ID</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr th:each="slot : ${availability}">
-                                                    <td th:text="${slot.dayOfWeek}"></td>
-                                                    <td th:text="${slot.startTime}"></td>
-                                                    <td th:text="${slot.endTime}"></td>
-                                                    <td th:text="${slot.id}"></td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle-fill me-2"></i>
+                                <span><strong>Lưu ý:</strong> Bạn có thể đề xuất bất kỳ thời gian nào phù hợp với lịch của mình. Hệ thống sẽ gửi yêu cầu đến gia sư và họ sẽ xác nhận nếu thời gian phù hợp. Thời gian học phải kéo dài ít nhất 30 phút và không quá 4 giờ.</span>
                             </div>
                         </div>
                     </div>
@@ -287,11 +251,11 @@
         document.addEventListener('DOMContentLoaded', function () {
             const subjectInputs = document.querySelectorAll('.subject-input');
             const priceDetailsContainer = document.getElementById('price-summary');
-            const slotDebugInfo = document.getElementById('slot-debug-info');
-            const timeSlots = document.querySelectorAll('input[name="timeSelection"]');
             const dateInput = document.getElementById('sessionDate');
+            const startTimeInput = document.getElementById('startTime');
+            const endTimeInput = document.getElementById('endTime');
             
-            // Kết nối DateInput với TimeSlots
+            // Hiển thị thông tin ngày đã chọn
             dateInput.addEventListener('change', function() {
                 if (!this.value) return;
                 
@@ -328,8 +292,7 @@
                     case 6: viDayName = 'Thứ Bảy'; break;
                 }
                 
-                dateInfo.innerHTML = `<strong>Ngày đã chọn:</strong> ${viDayName} (${this.value})
-                                      <br><small>Java DayOfWeek: ${javaDayOfWeek}</small>`;
+                dateInfo.innerHTML = `<strong>Ngày đã chọn:</strong> ${viDayName} (${this.value})`;
                 
                 // Xóa thông báo cũ nếu có
                 const oldInfo = document.querySelector('.date-selected-info');
@@ -337,111 +300,68 @@
                 
                 dateInfo.classList.add('date-selected-info');
                 this.parentNode.appendChild(dateInfo);
-                
-                // Lọc các time slots dựa trên ngày đã chọn
-                let visibleSlots = 0;
-                timeSlots.forEach(slot => {
-                    if (slot.dataset.day === javaDayOfWeek) {
-                        slot.parentNode.style.display = 'block';
-                        visibleSlots++;
-                    } else {
-                        slot.parentNode.style.display = 'none';
-                        slot.checked = false;
-                    }
-                });
-                
-                // Hiển thị thông báo nếu không có slot nào cho ngày đã chọn
-                const noSlotsWarning = document.querySelector('.no-slots-warning');
-                if (noSlotsWarning) noSlotsWarning.remove();
-                
-                if (visibleSlots === 0) {
-                    const warning = document.createElement('div');
-                    warning.className = 'alert alert-warning no-slots-warning mt-3';
-                    warning.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                         Không có khung giờ nào khả dụng vào ${viDayName}. Vui lòng chọn ngày khác.`;
-                    document.querySelector('.time-slots').parentNode.appendChild(warning);
-                }
-                
-                // Reset slot debug info
-                slotDebugInfo.innerHTML = '<p class="text-muted">Chưa có khung giờ nào được chọn</p>';
             });
             
-            // Thêm sự kiện lắng nghe khi chọn time slot
-            timeSlots.forEach(slot => {
-                slot.addEventListener('change', function() {
-                    if (this.checked) {
-                        const slotTime = this.value;
-                        const slotDay = this.dataset.day;
-                        const slotLabel = this.nextElementSibling.textContent.trim();
-                        const currentDate = document.getElementById('sessionDate').value;
-                        
-                        // Hiển thị thông tin gỡ lỗi
-                        slotDebugInfo.innerHTML = `
-                            <div class="alert alert-info mb-0">
-                                <p><strong>Thông tin khung giờ đã chọn:</strong></p>
-                                <ul class="mb-0">
-                                    <li>Ngày: ${currentDate || 'Chưa chọn'}</li>
-                                    <li>Thứ trong tuần: ${slotDay || 'Không có thông tin'}</li>
-                                    <li>Khung giờ: ${slotLabel}</li>
-                                    <li>Giá trị gửi đi: <code>${slotTime}</code></li>
-                                </ul>
-                            </div>
-                        `;
-                        
-                        // Cập nhật thông tin giá nếu đã chọn môn học
-                        const selectedSubject = document.querySelector('.subject-input:checked');
-                        if (selectedSubject) {
-                            const subjectName = selectedSubject.dataset.name;
-                            const hourlyRate = parseFloat(selectedSubject.dataset.rate);
-                            
-                            // Simple duration calculation
-                            const durationHtml = `<p>Thời lượng: 1 giờ</p>`;
-                            const priceHtml = `<p>Giá: $${hourlyRate.toFixed(2)}</p>`;
-                            
-                            priceDetailsContainer.innerHTML = `
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h6>${subjectName}</h6>
-                                        ${durationHtml}
-                                        ${priceHtml}
-                                        <p class="text-muted small">Giá dự tính dựa trên 1 giờ học.</p>
-                                    </div>
-                                </div>
-                            `;
-                        }
+            // Tính toán thời lượng và giá khi thay đổi thời gian
+            function updatePriceSummary() {
+                const selectedSubject = document.querySelector('.subject-input:checked');
+                const startTime = startTimeInput.value;
+                const endTime = endTimeInput.value;
+                
+                if (selectedSubject && startTime && endTime) {
+                    const subjectName = selectedSubject.dataset.name;
+                    const hourlyRate = parseFloat(selectedSubject.dataset.rate);
+                    
+                    // Tính toán thời lượng (giờ)
+                    const start = new Date(`2000-01-01T${startTime}:00`);
+                    const end = new Date(`2000-01-01T${endTime}:00`);
+                    
+                    // Kiểm tra nếu thời gian kết thúc nhỏ hơn thời gian bắt đầu
+                    if (end < start) {
+                        alert("Thời gian kết thúc phải sau thời gian bắt đầu. Vui lòng kiểm tra lại.");
+                        return;
                     }
-                });
-            });
+                    
+                    const durationMs = end - start;
+                    const durationHours = Math.max(durationMs / (1000 * 60 * 60), 0);
+                    
+                    // Tính giá dựa trên thời lượng
+                    const price = hourlyRate * (durationHours > 0 ? durationHours : 1);
+                    
+                    const durationHtml = `<p>Thời lượng: ${durationHours.toFixed(1)} giờ</p>`;
+                    const priceHtml = `<p>Giá: $${price.toFixed(2)}</p>`;
+                    
+                    priceDetailsContainer.innerHTML = `
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>${subjectName}</h6>
+                                ${durationHtml}
+                                ${priceHtml}
+                                <p class="text-muted small">Giá dự tính dựa trên thời lượng học.</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Thêm sự kiện lắng nghe cho các trường thời gian
+            startTimeInput.addEventListener('change', updatePriceSummary);
+            endTimeInput.addEventListener('change', updatePriceSummary);
             
             // Logic xử lý khi chọn môn học
             subjectInputs.forEach(input => {
                 input.addEventListener('change', function() {
                     const subjectName = this.dataset.name;
                     const hourlyRate = parseFloat(this.dataset.rate);
-                    const timeSelection = document.querySelector('input[name="timeSelection"]:checked');
                     
-                    if (timeSelection) {
-                        const times = timeSelection.value.split(',');
-                        // Simple duration calculation
-                        const durationHtml = `<p>Thời lượng: 1 giờ</p>`;
-                        const priceHtml = `<p>Giá: $${hourlyRate.toFixed(2)}</p>`;
-                        
-                        priceDetailsContainer.innerHTML = `
-                            <div class="card">
-                                <div class="card-body">
-                                    <h6>${subjectName}</h6>
-                                    ${durationHtml}
-                                    ${priceHtml}
-                                    <p class="text-muted small">Giá dự tính dựa trên 1 giờ học.</p>
-                                </div>
-                            </div>
-                        `;
+                    if (startTimeInput.value && endTimeInput.value) {
+                        updatePriceSummary();
                     } else {
                         priceDetailsContainer.innerHTML = `
                             <div class="card">
                                 <div class="card-body">
                                     <h6>${subjectName}</h6>
-                                    <p>Vui lòng chọn khung giờ để xem chi tiết giá</p>
+                                    <p>Vui lòng chọn giờ bắt đầu và giờ kết thúc để xem chi tiết giá</p>
                                 </div>
                             </div>
                         `;

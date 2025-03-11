@@ -108,7 +108,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void requestPasswordReset(String email) {
-        User user = userRepository.findByEmail(email)
+        // Verify that user exists, but we don't need the user object yet
+        userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         // Implementation for generating and sending password reset token
     }
@@ -188,7 +189,10 @@ public class UserServiceImpl implements UserService {
 
             // Generate a unique filename
             String originalFilename = file.getOriginalFilename();
-            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String fileExtension = ".jpg"; // Default extension if filename is null
+            if (originalFilename != null && originalFilename.contains(".")) {
+                fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
             String filename = UUID.randomUUID().toString() + fileExtension;
             
             // Save the file to the profile pictures directory

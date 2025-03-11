@@ -69,7 +69,7 @@
                         Please complete your profile to unlock all features.
                     </p>
                 </div>
-                <a th:href="@{/student/profile}" class="btn btn-outline-primary">
+                <a th:href="@{/profile}" class="btn btn-outline-primary">
                     <i class="fas fa-user-edit"></i> Edit Profile
                 </a>
             </div>
@@ -213,7 +213,7 @@
                                                     <span class="text-muted">No ratings yet</span>
                                                 </th:block>
                                             </div>
-                                            <a th:href="@{/tutors/{id}(id=${tutor.id})}" 
+                                            <a th:href="@{/book/tutor/{id}(id=${tutor.id})}" 
                                                class="btn btn-sm btn-outline-primary">Book Session</a>
                                         </div>
                                     </div>

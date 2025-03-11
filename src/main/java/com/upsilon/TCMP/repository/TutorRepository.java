@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.lang.NonNull;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
@@ -19,9 +20,9 @@ import java.util.Optional;
 public interface TutorRepository extends JpaRepository<Tutor, Integer> {
     @Query("SELECT t FROM Tutor t LEFT JOIN FETCH t.user WHERE t.id = :id")
     Optional<Tutor> findByIdWithUser(@Param("id") Integer id);
-    
     @Override
     @Query("SELECT t FROM Tutor t LEFT JOIN FETCH t.user")
+    @NonNull
     List<Tutor> findAll();
     
     Optional<Tutor> findByUserId(Integer userId);

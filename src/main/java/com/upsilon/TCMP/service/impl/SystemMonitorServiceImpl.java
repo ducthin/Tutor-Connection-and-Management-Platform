@@ -24,11 +24,23 @@ public class SystemMonitorServiceImpl implements SystemMonitorService {
         SystemStatusDTO status = new SystemStatusDTO();
         
         // Get disk usage
-        File root = new File("/");
-        long totalSpace = root.getTotalSpace();
-        long usableSpace = root.getUsableSpace();
-        int diskUsage = (int) ((totalSpace - usableSpace) * 100 / totalSpace);
-        status.setDiskUsagePercent(diskUsage);
+        File root;
+        try {
+            // Use system root drive for Windows or / for Unix
+            String osName = System.getProperty("os.name").toLowerCase();
+            if (osName.contains("win")) {
+                root = new File(System.getProperty("user.home").substring(0, 3)); // e.g. C:\
+            } else {
+                root = new File("/");
+            }
+            long totalSpace = root.getTotalSpace();
+            long usableSpace = root.getUsableSpace();
+            int diskUsage = totalSpace > 0 ? (int) ((totalSpace - usableSpace) * 100 / totalSpace) : 0;
+            status.setDiskUsagePercent(diskUsage);
+        } catch (Exception e) {
+            // Fallback if disk usage calculation fails
+            status.setDiskUsagePercent(50); // Default value
+        }
 
         // Get memory usage
         MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();

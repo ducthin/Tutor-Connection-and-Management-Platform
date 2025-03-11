@@ -13,7 +13,9 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class VerificationController {
 
+    @SuppressWarnings("unused")
     private final IAuthenticationService authService;
+    @SuppressWarnings("unused")
     private static final Logger logger = LoggerFactory.getLogger(VerificationController.class);
 
     public VerificationController(IAuthenticationService authService) {

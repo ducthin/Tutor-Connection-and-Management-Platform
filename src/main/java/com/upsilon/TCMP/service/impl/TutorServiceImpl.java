@@ -928,6 +928,46 @@ public class TutorServiceImpl implements TutorService {
         dto.setEndTime(session.getEndTime());
         dto.setStatus(session.getStatus());
         dto.setNotes(session.getNotes());
+        dto.setCancellationReason(session.getCancellationReason());
+        
+        // Set tutor information
+        if (session.getTutor() != null) {
+            TutorDTO tutorDTO = new TutorDTO();
+            tutorDTO.setId(session.getTutor().getId());
+            if (session.getTutor().getUser() != null) {
+                UserDTO userDTO = new UserDTO();
+                userDTO.setId(session.getTutor().getUser().getId());
+                userDTO.setFullName(session.getTutor().getUser().getFullName());
+                userDTO.setEmail(session.getTutor().getUser().getEmail());
+                userDTO.setProfilePictureUrl(session.getTutor().getUser().getProfilePictureUrl());
+                tutorDTO.setUser(userDTO);
+            }
+            dto.setTutor(tutorDTO);
+        }
+        
+        // Set student information
+        if (session.getStudent() != null) {
+            StudentDTO studentDTO = new StudentDTO();
+            studentDTO.setId(session.getStudent().getId());
+            if (session.getStudent().getUser() != null) {
+                UserDTO userDTO = new UserDTO();
+                userDTO.setId(session.getStudent().getUser().getId());
+                userDTO.setFullName(session.getStudent().getUser().getFullName());
+                userDTO.setEmail(session.getStudent().getUser().getEmail());
+                userDTO.setProfilePictureUrl(session.getStudent().getUser().getProfilePictureUrl());
+                studentDTO.setUser(userDTO);
+            }
+            dto.setStudent(studentDTO);
+        }
+        
+        // Set subject information
+        if (session.getSubject() != null) {
+            SubjectDTO subjectDTO = new SubjectDTO();
+            subjectDTO.setId(session.getSubject().getId());
+            subjectDTO.setName(session.getSubject().getName());
+            dto.setSubject(subjectDTO);
+        }
+        
         return dto;
     }
 
